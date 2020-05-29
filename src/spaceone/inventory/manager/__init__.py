@@ -1,0 +1,1 @@
+from spaceone.inventory.manager.collector_manager import CollectorManager

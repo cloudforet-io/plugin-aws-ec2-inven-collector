@@ -18,6 +18,7 @@ from datetime import datetime
 from spaceone.core.transaction import Transaction
 from spaceone.inventory.error import *
 from spaceone.core.error import *
+from spaceone.core import utils
 from spaceone.core.connector import BaseConnector
 
 _LOGGER = logging.getLogger(__name__)
@@ -184,7 +185,7 @@ def _create_session_with_access_key(aws_access_key_id, aws_secret_access_key):
     return session
 
 def _create_session_with_assume_role(aws_access_key_id, aws_secret_access_key, role_arn):
-    _create_session_with_access_key(aws_access_key_id, aws_secret_access_key)
+    session = _create_session_with_access_key(aws_access_key_id, aws_secret_access_key)
 
     sts = session.client('sts')
     assume_role_object = sts.assume_role(RoleArn=role_arn, RoleSessionName=utils.generate_id('AssumeRoleSession'))
@@ -192,7 +193,7 @@ def _create_session_with_assume_role(aws_access_key_id, aws_secret_access_key, r
 
     session = boto3.Session(aws_access_key_id=credentials['AccessKeyId'],
                             aws_secret_access_key=credentials['SecretAccessKey'],
-                            aws_session_toke=credentials['SessionToken'])
+                            aws_session_token=credentials['SessionToken'])
     return session
 
 
@@ -640,7 +641,7 @@ def _list_instances(client, query, instance_ids, region_name, secret_data):
         dic['data']['compute']['instance_type'] = instance['InstanceType']
         dic['data']["compute"]['az'] = az
         dic['data']['compute']['image'] = image_info.get('Name', '')
-        dic["data"]["compute"]["region"] = region_name
+        dic["data"]["compute"]["region_name"] = region_name
 
         if 'KeyName' in instance:
             dic['data']['compute']['keypair'] = instance['KeyName']
@@ -925,11 +926,10 @@ def _badge(color):
     return {'options': {'background_color': color},
             'type': 'badge'}
 
-def _state(image, color):
+def _state(color):
     return {"options": {
                 "icon": {
-                    "image": image,
-                    "color": color,
+                    "color": color
                     },
                 },
             "type": 'state',
@@ -949,10 +949,10 @@ def _create_sub_data():
                              'type': 'enum',
                              'options':
                                  {
-                                     "pending": _state('round', 'gray.500'),
-                                     "running": _state('round', 'green.500'),
-                                     "shutting-down": _state('round', 'yellow.500'),
-                                     "stopped": _state('round', 'red.500'),
+                                     "pending": _state('gray.400'),
+                                     "running": _state('green.500'),
+                                     "shutting-down": _state('yellow.500'),
+                                     "stopped": _state('red.500'),
                                  },
                              },
                         {'name': 'Instance Type',   'key': 'data.compute.instance_type'},
@@ -972,11 +972,11 @@ def _create_sub_data():
                              'options':
                                  {
                                      "true": _badge('green.500'),
-                                     "false": _badge('gray.300')
+                                     "false": _badge('gray.200')
                                  },
                              },
                         {'name': 'Image',           'key': 'data.compute.image'},
-                        {'name': 'Region',          'key': 'data.compute.region'},
+                        {'name': 'Region',          'key': 'data.compute.region_name'},
                         {'name': 'Availability zone', 'key': 'data.compute.az'},
                         {'name': 'Public Ip Address', 'key': 'data.public_ip_address'},
                         {'name': 'VPC ID',          'key': 'data.vpc.vpc_id'},
@@ -1024,7 +1024,7 @@ def _create_sub_data():
                         {'name': 'Type', 'key': 'disk_type'},
                         {'name': 'Size(GB)', 'key': 'size'},
                         {'name': 'Encrypted', 'key': 'tags.encrypted',
-                             'type': "enums",
+                             'type': "enum",
                              'options':
                                  {
                                      "true": _badge('green.500'),
@@ -1069,8 +1069,8 @@ def _create_sub_data():
                      'type': "enum",
                      'options':
                          {
-                             "inbound": _badge('green.500'),
-                             "outbound": _badge('blue.500'),
+                             "inbound": _badge('indigo.500'),
+                             "outbound": _badge('coral.600'),
                          },
                  },
                 {'name': 'Name', 'key': 'security_group_name'},
@@ -1165,19 +1165,28 @@ if __name__ == "__main__":
     # sak = os.environ.get('AWS_SECRET_ACCESS_KEY', "<YOUR_AWS_SECRET_ACCESS_KEY>")
     aki = os.environ.get('AWS_ACCESS_KEY_ID', None)
     sak = os.environ.get('AWS_SECRET_ACCESS_KEY', None)
-    secret_data = {
-        #        'region_name': 'ap-northeast-2',
-        'aws_access_key_id': aki,
-        'aws_secret_access_key': sak
-    }
+    role_arn = os.environ.get('ROLE_ARN', None)
+    if role_arn:
+        secret_data = {
+            #        'region_name': 'ap-northeast-2',
+            'aws_access_key_id': aki,
+            'aws_secret_access_key': sak,
+            'role_arn': role_arn
+        }
+    else:
+        secret_data = {
+            #        'region_name': 'ap-northeast-2',
+            'aws_access_key_id': aki,
+            'aws_secret_access_key': sak
+        }
     conn = EC2Connector(Transaction(), secret_data)
     opts = conn.verify({}, secret_data)
     print(opts)
     #query = {'region_name': ['ap-northeast-1']}
-    query = {'instance_id': ['i-0745c928020bed89f'], 'region_name': ['ap-northeast-2']}
+    #query = {'instance_id': ['i-0745c928020bed89f'], 'region_name': ['ap-northeast-2']}
     #query = {'instance_id': ['i-0873656da2e3af584', 'i-123'], 'region_name': ['ap-northeast-1', 'ap-northeast-2']}
     # query = {'instance_id': ['i-0873656da2e3af584'], 'region_name': ['ap-northeast-2']}
-    #query = {}
+    query = {}
     from datetime import datetime
 
     a = datetime.now()

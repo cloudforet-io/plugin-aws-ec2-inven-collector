@@ -405,7 +405,7 @@ def _get_security_group_rules(sg_info):
         rule['direction'] = 'outbound'
 
         # Protocol
-        rule['protocol'] = 'all' if outbound_rule['IpProtocol'] == '-1' else outbound_rule['IpProtocol']
+        protocol = 'all' if outbound_rule['IpProtocol'] == '-1' else outbound_rule['IpProtocol']
         rule['protocol'] = protocol.upper()
 
         # Dst name CIDR and Port

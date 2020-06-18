@@ -871,6 +871,22 @@ def _list_instances(client, query, instance_ids, region_name, secret_data):
         dic["reference"] = _create_reference_schema(region_name,
                                                     dic["data"]["compute"]["instance_id"],
                                                     dic["data"]["compute"]["account_id"])
+
+
+        ################################
+        # cloudwatch for monitoring
+        ################################
+        dic['data']['cloudwatch'] = {
+            'namespace': 'AWS/EC2',
+            'region_name': region_name,
+            'dimensions': [
+                {
+                    'Name': 'InstanceId',
+                    'Value': instance_id
+                }
+            ]
+        }
+
         resource_list.append(dic)
 
     return resource_list, region_name

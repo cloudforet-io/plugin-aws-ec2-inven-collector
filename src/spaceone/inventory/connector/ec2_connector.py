@@ -991,24 +991,24 @@ def _create_sub_data():
                                      "false": _badge('gray.200')
                                  },
                              },
-                        {'name': 'Image',           'key': 'data.compute.image'},
+                        {'name': 'AMI ID',           'key': 'data.compute.image'},
                         {'name': 'Region',          'key': 'data.compute.region_name'},
-                        {'name': 'Availability zone', 'key': 'data.compute.az'},
-                        {'name': 'Public Ip Address', 'key': 'data.public_ip_address'},
-                        {'name': 'VPC ID',          'key': 'data.vpc.vpc_id'},
-                        {'name': 'VPC Name',        'key': 'data.vpc.vpc_name'},
-                        {'name': 'Subnet ID',       'key': 'data.subnet.subnet_id'},
-                        {'name': 'Subnet Name',     'key': 'data.subnet.subnet_name'},
-                        {'name': 'Security Group',  'key': 'data.compute.security_groups',
-                                     'type': 'list',
-                                     'options': {
-                                         'item': {
-                                             'type': 'text',
-                                            },
-                                        },
-                                     },
-                        {'name': 'Created By',      'key': 'data.compute.account_id'},
-                        {'name': 'Launched At ', 'key': 'data.compute.launched_at'}
+                        {'name': 'Availability Zone', 'key': 'data.compute.az'},
+                        {'name': 'Public IP', 'key': 'data.public_ip_address'},
+                        {'name': 'Security Group', 'key': 'data.compute.security_groups',
+                            "type": "list",
+                            "options": {
+                                "item": {
+                                    "type": "badge",
+                                    "options": {
+                                        "outline_color": "violet.500"
+                                    }
+                                },
+                                "delimiter": "  "
+                            }
+                        },
+                        {'name': 'Account ID',      'key': 'data.compute.account_id'},
+                        {'name': 'Launched Time ', 'key': 'data.compute.launched_at'}
                         ]
                 }
             }
@@ -1023,10 +1023,24 @@ def _create_sub_data():
             }
     }
 
+    vpc_and_subnet = {
+        'name': 'VPC and Subnet',
+        'type': 'item',
+        'options': {
+            'fields': [{'name': 'VPC ID',          'key': 'data.vpc.vpc_id'},
+                        {'name': 'VPC Name',        'key': 'data.vpc.vpc_name'},
+                        {'name': 'Subnet ID',       'key': 'data.subnet.subnet_id'},
+                        {'name': 'Subnet Name',     'key': 'data.subnet.subnet_name'},
+                       ]
+        }
+    }
+
+    
+
     aws_ec2 = {
         'name': 'AWS EC2',
         'type': 'list',
-        'options': {'layouts': [ ec2_instance, auto_scaling_group ] }
+        'options': {'layouts': [ ec2_instance, vpc_and_subnet, auto_scaling_group ] }
     }
 
     disk = {
@@ -1197,6 +1211,7 @@ if __name__ == "__main__":
         }
     conn = EC2Connector(Transaction(), secret_data)
     opts = conn.verify({}, secret_data)
+    print('####################################################')
     print(opts)
     #query = {'region_name': ['ap-northeast-1']}
     #query = {'instance_id': ['i-0745c928020bed89f'], 'region_name': ['ap-northeast-2']}

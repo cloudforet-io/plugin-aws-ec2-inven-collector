@@ -683,7 +683,7 @@ def _list_instances(client, query, instance_ids, region_name, secret_data):
                 dic['data']['vpc']['vpc_name'] = vpc_tag["Value"]
 
         if "vpc_name" not in dic['data']["vpc"].keys():
-            dic['data']["vpc"]['vpc_name'] = ''
+            dic['data']["vpc"]['vpc_name'] = ""
 
         dic["data"]["vpc"][
             "vpc_arn"] = f"arn:aws:ec2:{region_name}:{instance['OwnerId']}:vpc/{dic['data']['vpc']['vpc_id']}"

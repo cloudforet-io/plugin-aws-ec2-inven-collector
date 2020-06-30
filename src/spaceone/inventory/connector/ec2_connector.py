@@ -1062,20 +1062,10 @@ def _create_sub_data():
                              'type': "enum",
                              'options':
                                  {
-                                     "true": {
-                                         "type": "badge",
-                                         "options": {
-                                             "background_color": "indigo.500"
-                                         }
-                                     },
-                                     "false": {
-                                         "type": "badge",
-                                         "options": {
-                                             "background_color": "coral.600"
-                                         }
-                                     }
-                                 },
-                             }
+                                     'true': _badge('indigo.500'),
+                                     'false': _badge('coral.600')
+                                 }
+                        }
 
                 ]
             }

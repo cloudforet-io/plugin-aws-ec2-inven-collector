@@ -683,7 +683,7 @@ def _list_instances(client, query, instance_ids, region_name, secret_data):
                 dic['data']['vpc']['vpc_name'] = vpc_tag["Value"]
 
         if "vpc_name" not in dic['data']["vpc"].keys():
-            dic['data']["vpc"]['vpc_name'] = "unknown"
+            dic['data']["vpc"]['vpc_name'] = ''
 
         dic["data"]["vpc"][
             "vpc_arn"] = f"arn:aws:ec2:{region_name}:{instance['OwnerId']}:vpc/{dic['data']['vpc']['vpc_id']}"
@@ -707,7 +707,7 @@ def _list_instances(client, query, instance_ids, region_name, secret_data):
                 dic['data']["subnet"]['subnet_name'] = subnet_tag["Value"]
 
         if "subnet_name" not in dic['data']["subnet"].keys():
-            dic['data']["subnet"]['subnet_name'] = "unknown"
+            dic['data']["subnet"]['subnet_name'] = ""
 
         dic["data"]["subnet"][
             "subnet_arn"] = f"arn:aws:ec2:{region_name}:{instance['OwnerId']}:vpc/{dic['data']['subnet']['subnet_id']}"
@@ -772,7 +772,6 @@ def _list_instances(client, query, instance_ids, region_name, secret_data):
             nic_dic['tags']["ip_list"] = ip_list
 
             dic['nics'].append(nic_dic)
-
             dic['ip_addresses'].append(nic['PrivateIpAddress'])
 
         ###############
@@ -783,8 +782,12 @@ def _list_instances(client, query, instance_ids, region_name, secret_data):
         device_index = 0
         for volume in instance['BlockDeviceMappings']:
             disk_dic = {}
+            print('###vlolume:start##')
+            print(volume)
+            print('###vlolume:end##')
             disk_type = list(volume.keys())[-1]
             disk_dic['disk_type'] = disk_type.upper()
+            disk_dic['dist_id'] = volume['VolumeId']
             disk_dic['device'] = volume['DeviceName'].split('/')[-1]
             volume = volume_dic[volume['Ebs']['VolumeId']]
             disk_dic['device_index'] = device_index
@@ -1024,7 +1027,7 @@ def _create_sub_data():
     }
 
     vpc_and_subnet = {
-        'name': 'VPC and Subnet',
+        'name': 'VPC',
         'type': 'item',
         'options': {
             'fields': [{'name': 'VPC ID',          'key': 'data.vpc.vpc_id'},
@@ -1051,17 +1054,28 @@ def _create_sub_data():
             'fields': [
                         {'name': 'Index', 'key': 'device_index'},
                         {'name': 'Name', 'key': 'device'},
-                        {'name': 'Type', 'key': 'disk_type'},
-                        {'name': 'Size(GB)', 'key': 'size'},
+                        {'name': 'Volume ID', 'key': 'dist_id'},
+                        {'name': 'Volume Type', 'key': 'disk_type'},
+                        {'name': 'IOPS', 'key': 'tags.iops'},
+                        {'name': 'Size(GiB)', 'key': 'size'},
                         {'name': 'Encrypted', 'key': 'tags.encrypted',
                              'type': "enum",
                              'options':
                                  {
-                                     "true": _badge('green.500'),
-                                     "false": _badge('red.500')
+                                     "true": {
+                                         "type": "badge",
+                                         "options": {
+                                             "background_color": "indigo.500"
+                                         }
+                                     },
+                                     "false": {
+                                         "type": "badge",
+                                         "options": {
+                                             "background_color": "coral.600"
+                                         }
+                                     }
                                  },
-                             },
-                        {'name': 'iops', 'key': 'tags.iops'}
+                             }
 
                 ]
             }
@@ -1120,6 +1134,14 @@ def _create_sub_data():
             'fields': [
                 {'name': 'Name', 'key': 'name'},
                 {'name': 'DNS', 'key': 'dns'},
+                {'name': 'Type', 'key': 'type',
+                 'type': "enum",
+                 'options':
+                     {
+                         "network": _badge('blue.500'),
+                         "application": _badge('green.500')
+                     },
+                 },
                 {'name': 'Port', 'key': 'port',
                      'type': 'list',
                      'options': {
@@ -1128,14 +1150,7 @@ def _create_sub_data():
                             },
                         },
                     },
-                {'name': 'Type', 'key': 'type',
-                     'type': "enum",
-                     'options':
-                         {
-                             "network": _badge('blue.500'),
-                             "application": _badge('green.500')
-                            },
-                    },
+
                 {'name': 'Scheme', 'key': 'tags.scheme',
                     'type': 'enum',
                     'options':
@@ -1211,7 +1226,7 @@ if __name__ == "__main__":
         }
     conn = EC2Connector(Transaction(), secret_data)
     opts = conn.verify({}, secret_data)
-    print('####################################################')
+
     print(opts)
     #query = {'region_name': ['ap-northeast-1']}
     #query = {'instance_id': ['i-0745c928020bed89f'], 'region_name': ['ap-northeast-2']}

@@ -107,6 +107,7 @@ class EC2Connector(BaseConnector):
             result = pool.map(discover_ec2, params)
 
             for resources in result:
+
                 #print(f'resources: {resources}')
                 (collected_resources, region_name) = resources
                 if len(collected_resources) > 0:
@@ -238,6 +239,10 @@ def discover_ec2(params):
                                     params['region_name'],
                                     params['secret_data']
                                     )
+
+        print('##############resources: Start ###############')
+        print(resources)
+        print('##############resources: end ###############')
         return resources
     except Exception as e:
         _LOGGER.error(f'[discover_ec2] skip region: {params["region_name"]}, {e}')
@@ -286,6 +291,7 @@ def _get_volume_info(client, ids=None):
         query['VolumeIds'] = ids
 
     volumes = client.describe_volumes(**query)
+
     for volume in volumes['Volumes']:
         result[volume['VolumeId']] = volume
 
@@ -528,6 +534,8 @@ def _list_instances(client, query, instance_ids, region_name, secret_data):
     # Find Resources
     instance_types = set([])
     for instance in instances:
+
+
         owner_id = instance['OwnerId']
         instance = instance['Instances'][0]
         if (instance_ids) and (instance['InstanceId'] not in instance_ids):
@@ -547,6 +555,7 @@ def _list_instances(client, query, instance_ids, region_name, secret_data):
             vpc_dic[nic["VpcId"]] = None
 
         for volume in instance['BlockDeviceMappings']:
+
             volume_dic[volume['Ebs']['VolumeId']] = None
 
     ec2_type = _get_instance_type(client, list(instance_types))
@@ -795,6 +804,7 @@ def _list_instances(client, query, instance_ids, region_name, secret_data):
             disk_dic["tags"]["iops"] = volume["Iops"]
             disk_dic["tags"]["encrypted"] = volume["Encrypted"]
             disk_dic["tags"]['volume_id'] = volume['VolumeId']
+            disk_dic["tags"]['volume_type'] = volume['VolumeType']
             dic['disks'].append(disk_dic)
             device_index += 1
 
@@ -943,6 +953,10 @@ def _badge(color):
     return {'options': {'background_color': color},
             'type': 'badge'}
 
+def _badge_ol(color):
+    return {'options': {'outline_color': color},
+            'type': 'badge'}
+
 def _state(color):
     return {"options": {
                 "icon": {
@@ -1052,8 +1066,18 @@ def _create_sub_data():
             'fields': [
                         {'name': 'Index', 'key': 'device_index'},
                         {'name': 'Name', 'key': 'device'},
-                        {'name': 'Volume ID', 'key': 'tags.volume_id'},
-                        {'name': 'Volume Type', 'key': 'disk_type'},
+                        {'name': 'Volume ID', 'key': 'tags.volume_id',
+                             'type': "enum",
+                             'options':
+                                {
+                                    'gp2': _badge_ol('primary'),
+                                    'io1': _badge_ol('indigo.500'),
+                                    'sc1': _badge_ol('coral.600'),
+                                    'st1': _badge_ol('peacock.500'),
+                                    'standard': _badge_ol('green.500')
+                                }
+                         },
+                        {'name': 'Volume Type', 'key': 'tags.volume_type'},
                         {'name': 'IOPS', 'key': 'tags.iops'},
                         {'name': 'Size(GiB)', 'key': 'size'},
                         {'name': 'Encrypted', 'key': 'tags.encrypted',

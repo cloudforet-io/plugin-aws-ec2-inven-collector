@@ -952,8 +952,12 @@ def _badge(color):
             'type': 'badge'}
 
 def _badge_ol(color):
-    return {'options': {'outline_color': color},
-            'type': 'badge'}
+    return {
+            "options": {
+                "outline_color": color
+            },
+            "type": "badge"
+            }
 
 def _state(color):
     return {"options": {
@@ -1068,7 +1072,7 @@ def _create_sub_data():
                              'type': "enum",
                              'options':
                                 {
-                                    'gp2': _badge_ol('primary'),
+                                    'gp2': _badge_ol('violet.500'),
                                     'io1': _badge_ol('indigo.500'),
                                     'sc1': _badge_ol('coral.600'),
                                     'st1': _badge_ol('peacock.500'),

@@ -803,6 +803,7 @@ def _list_instances(client, query, instance_ids, region_name, secret_data):
             disk_dic["tags"]["encrypted"] = volume["Encrypted"]
             disk_dic["tags"]['volume_id'] = volume['VolumeId']
             disk_dic["tags"]['volume_type'] = volume['VolumeType']
+            print(volume['VolumeType'])
             dic['disks'].append(disk_dic)
             device_index += 1
 
@@ -1068,18 +1069,18 @@ def _create_sub_data():
             'fields': [
                         {'name': 'Index', 'key': 'device_index'},
                         {'name': 'Name', 'key': 'device'},
-                        {'name': 'Volume ID', 'key': 'tags.volume_id',
-                             'type': "enum",
-                             'options':
-                                {
-                                    'gp2': _badge_ol('violet.500'),
-                                    'io1': _badge_ol('indigo.500'),
-                                    'sc1': _badge_ol('coral.600'),
-                                    'st1': _badge_ol('peacock.500'),
-                                    'standard': _badge_ol('green.500')
-                                }
+                        {'name': 'Volume ID', 'key': 'tags.volume_id'},
+                        {'name': 'Volume Type', 'key': 'tags.volume_type',
+                         'type': "enum",
+                         'options':
+                             {
+                                 'gp2': _badge_ol('primary'),
+                                 'io1': _badge_ol('indigo.500'),
+                                 'sc1': _badge_ol('coral.600'),
+                                 'st1': _badge_ol('peacock.500'),
+                                 'standard': _badge_ol('green.500')
+                             }
                          },
-                        {'name': 'Volume Type', 'key': 'tags.volume_type'},
                         {'name': 'IOPS', 'key': 'tags.iops'},
                         {'name': 'Size(GiB)', 'key': 'size'},
                         {'name': 'Encrypted', 'key': 'tags.encrypted',

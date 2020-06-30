@@ -240,9 +240,7 @@ def discover_ec2(params):
                                     params['secret_data']
                                     )
 
-        print('##############resources: Start ###############')
-        print(resources)
-        print('##############resources: end ###############')
+
         return resources
     except Exception as e:
         _LOGGER.error(f'[discover_ec2] skip region: {params["region_name"]}, {e}')

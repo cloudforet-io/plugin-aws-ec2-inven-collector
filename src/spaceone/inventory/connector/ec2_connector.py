@@ -782,12 +782,10 @@ def _list_instances(client, query, instance_ids, region_name, secret_data):
         device_index = 0
         for volume in instance['BlockDeviceMappings']:
             disk_dic = {}
-            print('###vlolume:start##')
-            print(volume)
-            print('###vlolume:end##')
+
             disk_type = list(volume.keys())[-1]
             disk_dic['disk_type'] = disk_type.upper()
-            disk_dic['dist_id'] = volume['VolumeId']
+
             disk_dic['device'] = volume['DeviceName'].split('/')[-1]
             volume = volume_dic[volume['Ebs']['VolumeId']]
             disk_dic['device_index'] = device_index
@@ -1038,7 +1036,7 @@ def _create_sub_data():
         }
     }
 
-    
+
 
     aws_ec2 = {
         'name': 'AWS EC2',
@@ -1054,7 +1052,7 @@ def _create_sub_data():
             'fields': [
                         {'name': 'Index', 'key': 'device_index'},
                         {'name': 'Name', 'key': 'device'},
-                        {'name': 'Volume ID', 'key': 'dist_id'},
+                        {'name': 'Volume ID', 'key': 'tags.volume_id'},
                         {'name': 'Volume Type', 'key': 'disk_type'},
                         {'name': 'IOPS', 'key': 'tags.iops'},
                         {'name': 'Size(GiB)', 'key': 'size'},
@@ -1133,14 +1131,13 @@ def _create_sub_data():
                      },
                  },
                 {'name': 'Port', 'key': 'port',
-                     'type': 'list',
-                     'options': {
-                         'item': {
+                 'type': 'list',
+                 'options': {
+                  'item': {
                              'type': 'text',
                             },
-                        },
-                    },
-
+                        }
+                },
                 {'name': 'Scheme', 'key': 'tags.scheme',
                     'type': 'enum',
                     'options':

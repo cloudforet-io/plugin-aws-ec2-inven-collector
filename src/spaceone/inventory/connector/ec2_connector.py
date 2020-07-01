@@ -785,6 +785,8 @@ def _list_instances(client, query, instance_ids, region_name, secret_data):
             dic['nics'].append(nic_dic)
             dic['ip_addresses'].append(nic['PrivateIpAddress'])
 
+        dic['nics'] = sorted(dic['nics'], key=lambda k: k['device_index'])
+
         ###############
         # data.disk
         ###############
@@ -1189,7 +1191,7 @@ def _create_sub_data():
     }
 
     tags = {
-        'name': 'tags',
+        'name': 'Tags',
         'type': 'table',
         'options': {
             'root_path': 'data.tags',

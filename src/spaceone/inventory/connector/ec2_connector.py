@@ -107,6 +107,7 @@ class EC2Connector(BaseConnector):
             result = pool.map(discover_ec2, params)
 
             for resources in result:
+
                 #print(f'resources: {resources}')
                 (collected_resources, region_name) = resources
                 if len(collected_resources) > 0:
@@ -238,6 +239,8 @@ def discover_ec2(params):
                                     params['region_name'],
                                     params['secret_data']
                                     )
+
+
         return resources
     except Exception as e:
         _LOGGER.error(f'[discover_ec2] skip region: {params["region_name"]}, {e}')
@@ -286,6 +289,7 @@ def _get_volume_info(client, ids=None):
         query['VolumeIds'] = ids
 
     volumes = client.describe_volumes(**query)
+
     for volume in volumes['Volumes']:
         result[volume['VolumeId']] = volume
 
@@ -503,11 +507,15 @@ def _list_instances(client, query, instance_ids, region_name, secret_data):
         client_elb, resource_elb = _set_connect(secret_data, region_name, "elb")
         client_elbv2, resource_elbv2 = _set_connect(secret_data, region_name, "elbv2")
 
+
         auto_scaling_groups = client_autoscaling.describe_auto_scaling_groups(**autoscaling_query)["AutoScalingGroups"]
         launch_configurations = client_autoscaling.describe_launch_configurations()["LaunchConfigurations"]
 
         elbs = client_elb.describe_load_balancers()
         elbs_v2 = client_elbv2.describe_load_balancers()
+
+
+
         target_groups = client_elbv2.describe_target_groups()["TargetGroups"]
 
     except Exception as e:
@@ -528,6 +536,8 @@ def _list_instances(client, query, instance_ids, region_name, secret_data):
     # Find Resources
     instance_types = set([])
     for instance in instances:
+
+
         owner_id = instance['OwnerId']
         instance = instance['Instances'][0]
         if (instance_ids) and (instance['InstanceId'] not in instance_ids):
@@ -547,6 +557,7 @@ def _list_instances(client, query, instance_ids, region_name, secret_data):
             vpc_dic[nic["VpcId"]] = None
 
         for volume in instance['BlockDeviceMappings']:
+
             volume_dic[volume['Ebs']['VolumeId']] = None
 
     ec2_type = _get_instance_type(client, list(instance_types))
@@ -683,7 +694,7 @@ def _list_instances(client, query, instance_ids, region_name, secret_data):
                 dic['data']['vpc']['vpc_name'] = vpc_tag["Value"]
 
         if "vpc_name" not in dic['data']["vpc"].keys():
-            dic['data']["vpc"]['vpc_name'] = ''
+            dic['data']["vpc"]['vpc_name'] = ""
 
         dic["data"]["vpc"][
             "vpc_arn"] = f"arn:aws:ec2:{region_name}:{instance['OwnerId']}:vpc/{dic['data']['vpc']['vpc_id']}"
@@ -751,6 +762,7 @@ def _list_instances(client, query, instance_ids, region_name, secret_data):
             nic_dic['ip_addresses'] = []
             subnet = subnet_dic[nic['SubnetId']]
             ip_list = []
+
             for ip_item in nic['PrivateIpAddresses']:
                 nic_ip = {}
                 nic_ip['ip_address'] = ip_item['PrivateIpAddress']
@@ -761,7 +773,6 @@ def _list_instances(client, query, instance_ids, region_name, secret_data):
             nic_dic["tags"] = {}
 
             if "Association" in nic.keys():
-
                 nic_dic["public_ip_address"] = nic["Association"]["PublicIp"]
                 nic_dic['tags']["public_dns"] = nic["Association"]["PublicDnsName"]
 
@@ -782,12 +793,10 @@ def _list_instances(client, query, instance_ids, region_name, secret_data):
         device_index = 0
         for volume in instance['BlockDeviceMappings']:
             disk_dic = {}
-            print('###vlolume:start##')
-            print(volume)
-            print('###vlolume:end##')
+
             disk_type = list(volume.keys())[-1]
             disk_dic['disk_type'] = disk_type.upper()
-            disk_dic['dist_id'] = volume['VolumeId']
+
             disk_dic['device'] = volume['DeviceName'].split('/')[-1]
             volume = volume_dic[volume['Ebs']['VolumeId']]
             disk_dic['device_index'] = device_index
@@ -797,6 +806,8 @@ def _list_instances(client, query, instance_ids, region_name, secret_data):
             disk_dic["tags"]["iops"] = volume["Iops"]
             disk_dic["tags"]["encrypted"] = volume["Encrypted"]
             disk_dic["tags"]['volume_id'] = volume['VolumeId']
+            disk_dic["tags"]['volume_type'] = volume['VolumeType']
+            print(volume['VolumeType'])
             dic['disks'].append(disk_dic)
             device_index += 1
 
@@ -811,7 +822,10 @@ def _list_instances(client, query, instance_ids, region_name, secret_data):
         for tg in target_group_dic:
 
             if target_group_dic[tg]["TargetType"] == "instance":
+                print(target_group_dic[tg])
                 for target in target_group_dic[tg]["TargetHealthDescriptions"]:
+
+
                     if target["Target"]["Id"] == instance_id:
                         elb_list.append(target_group_dic[tg]["LoadBalancerArns"][0])
 
@@ -852,11 +866,8 @@ def _list_instances(client, query, instance_ids, region_name, secret_data):
 
         for elb_lis in elb_list:
             instance_elb_dic = {}
-
             instance_elb_dic["name"] = elb_dic[elb_lis]["LoadBalancerName"]
-
             instance_elb_dic["type"] = elb_dic[elb_lis]["Type"]
-
             instance_elb_dic["dns"] = elb_dic[elb_lis]["DNSName"]
             instance_elb_dic["port"] = target_port_dic[elb_lis]
             instance_elb_dic["tags"] = {}
@@ -864,6 +875,13 @@ def _list_instances(client, query, instance_ids, region_name, secret_data):
             instance_elb_dic["tags"]["arn"] = elb_dic[elb_lis]["LoadBalancerArn"]
 
             dic["data"]["load_balancers"].append(instance_elb_dic)
+
+        #########################
+        #     data.tags          #
+        #########################
+        dic["data"]["tags"] = instance["Tags"]
+
+
 
         ################################
         # metadata for frontend
@@ -944,6 +962,14 @@ def _create_table_layout():
 def _badge(color):
     return {'options': {'background_color': color},
             'type': 'badge'}
+
+def _badge_ol(color):
+    return {
+            "options": {
+                "outline_color": color
+            },
+            "type": "badge"
+            }
 
 def _state(color):
     return {"options": {
@@ -1038,7 +1064,7 @@ def _create_sub_data():
         }
     }
 
-    
+
 
     aws_ec2 = {
         'name': 'AWS EC2',
@@ -1054,28 +1080,28 @@ def _create_sub_data():
             'fields': [
                         {'name': 'Index', 'key': 'device_index'},
                         {'name': 'Name', 'key': 'device'},
-                        {'name': 'Volume ID', 'key': 'dist_id'},
-                        {'name': 'Volume Type', 'key': 'disk_type'},
+                        {'name': 'Volume ID', 'key': 'tags.volume_id'},
+                        {'name': 'Volume Type', 'key': 'tags.volume_type',
+                         'type': "enum",
+                         'options':
+                             {
+                                 'gp2': _badge_ol('primary'),
+                                 'io1': _badge_ol('indigo.500'),
+                                 'sc1': _badge_ol('coral.600'),
+                                 'st1': _badge_ol('peacock.500'),
+                                 'standard': _badge_ol('green.500')
+                             }
+                         },
                         {'name': 'IOPS', 'key': 'tags.iops'},
                         {'name': 'Size(GiB)', 'key': 'size'},
                         {'name': 'Encrypted', 'key': 'tags.encrypted',
                              'type': "enum",
                              'options':
                                  {
-                                     "true": {
-                                         "type": "badge",
-                                         "options": {
-                                             "background_color": "indigo.500"
-                                         }
-                                     },
-                                     "false": {
-                                         "type": "badge",
-                                         "options": {
-                                             "background_color": "coral.600"
-                                         }
-                                     }
-                                 },
-                             }
+                                     'true': _badge('indigo.500'),
+                                     'false': _badge('coral.600')
+                                 }
+                        }
 
                 ]
             }
@@ -1138,19 +1164,18 @@ def _create_sub_data():
                  'type': "enum",
                  'options':
                      {
-                         "network": _badge('blue.500'),
-                         "application": _badge('green.500')
+                         "network": _badge('indigo.500'),
+                         "application": _badge('coral.600')
                      },
                  },
                 {'name': 'Port', 'key': 'port',
-                     'type': 'list',
-                     'options': {
-                         'item': {
+                 'type': 'list',
+                 'options': {
+                  'item': {
                              'type': 'text',
                             },
-                        },
-                    },
-
+                        }
+                },
                 {'name': 'Scheme', 'key': 'tags.scheme',
                     'type': 'enum',
                     'options':
@@ -1162,7 +1187,20 @@ def _create_sub_data():
             ]
         }
     }
-    sub_data = [aws_ec2, disk, nic, sg_rules, load_balancers]
+
+    tags = {
+        'name': 'tags',
+        'type': 'table',
+        'options': {
+            'root_path': 'data.tags',
+            'fields': [
+                {'name': 'Key', 'key': 'Key'},
+                {'name': 'Value', 'key': 'Value'}
+            ]
+        }
+    }
+
+    sub_data = [aws_ec2, disk, nic, sg_rules, load_balancers, tags]
     return sub_data
 
 

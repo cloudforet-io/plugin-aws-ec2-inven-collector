@@ -507,11 +507,15 @@ def _list_instances(client, query, instance_ids, region_name, secret_data):
         client_elb, resource_elb = _set_connect(secret_data, region_name, "elb")
         client_elbv2, resource_elbv2 = _set_connect(secret_data, region_name, "elbv2")
 
+
         auto_scaling_groups = client_autoscaling.describe_auto_scaling_groups(**autoscaling_query)["AutoScalingGroups"]
         launch_configurations = client_autoscaling.describe_launch_configurations()["LaunchConfigurations"]
 
         elbs = client_elb.describe_load_balancers()
         elbs_v2 = client_elbv2.describe_load_balancers()
+
+
+
         target_groups = client_elbv2.describe_target_groups()["TargetGroups"]
 
     except Exception as e:
@@ -758,6 +762,7 @@ def _list_instances(client, query, instance_ids, region_name, secret_data):
             nic_dic['ip_addresses'] = []
             subnet = subnet_dic[nic['SubnetId']]
             ip_list = []
+
             for ip_item in nic['PrivateIpAddresses']:
                 nic_ip = {}
                 nic_ip['ip_address'] = ip_item['PrivateIpAddress']
@@ -768,7 +773,6 @@ def _list_instances(client, query, instance_ids, region_name, secret_data):
             nic_dic["tags"] = {}
 
             if "Association" in nic.keys():
-
                 nic_dic["public_ip_address"] = nic["Association"]["PublicIp"]
                 nic_dic['tags']["public_dns"] = nic["Association"]["PublicDnsName"]
 
@@ -818,7 +822,10 @@ def _list_instances(client, query, instance_ids, region_name, secret_data):
         for tg in target_group_dic:
 
             if target_group_dic[tg]["TargetType"] == "instance":
+                print(target_group_dic[tg])
                 for target in target_group_dic[tg]["TargetHealthDescriptions"]:
+
+
                     if target["Target"]["Id"] == instance_id:
                         elb_list.append(target_group_dic[tg]["LoadBalancerArns"][0])
 
@@ -859,11 +866,8 @@ def _list_instances(client, query, instance_ids, region_name, secret_data):
 
         for elb_lis in elb_list:
             instance_elb_dic = {}
-
             instance_elb_dic["name"] = elb_dic[elb_lis]["LoadBalancerName"]
-
             instance_elb_dic["type"] = elb_dic[elb_lis]["Type"]
-
             instance_elb_dic["dns"] = elb_dic[elb_lis]["DNSName"]
             instance_elb_dic["port"] = target_port_dic[elb_lis]
             instance_elb_dic["tags"] = {}
@@ -871,6 +875,13 @@ def _list_instances(client, query, instance_ids, region_name, secret_data):
             instance_elb_dic["tags"]["arn"] = elb_dic[elb_lis]["LoadBalancerArn"]
 
             dic["data"]["load_balancers"].append(instance_elb_dic)
+
+        #########################
+        #     data.tags          #
+        #########################
+        dic["data"]["tags"] = instance["Tags"]
+
+
 
         ################################
         # metadata for frontend
@@ -1153,8 +1164,8 @@ def _create_sub_data():
                  'type': "enum",
                  'options':
                      {
-                         "network": _badge('blue.500'),
-                         "application": _badge('green.500')
+                         "network": _badge('indigo.500'),
+                         "application": _badge('coral.600')
                      },
                  },
                 {'name': 'Port', 'key': 'port',
@@ -1176,7 +1187,20 @@ def _create_sub_data():
             ]
         }
     }
-    sub_data = [aws_ec2, disk, nic, sg_rules, load_balancers]
+
+    tags = {
+        'name': 'tags',
+        'type': 'table',
+        'options': {
+            'root_path': 'data.tags',
+            'fields': [
+                {'name': 'Key', 'key': 'Key'},
+                {'name': 'Value', 'key': 'Value'}
+            ]
+        }
+    }
+
+    sub_data = [aws_ec2, disk, nic, sg_rules, load_balancers, tags]
     return sub_data
 
 

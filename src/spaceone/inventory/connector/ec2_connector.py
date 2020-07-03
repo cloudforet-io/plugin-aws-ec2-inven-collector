@@ -994,10 +994,10 @@ def _create_sub_data():
                              'type': 'enum',
                              'options':
                                  {
-                                     "pending": _state('gray.400'),
-                                     "running": _state('green.500'),
-                                     "shutting-down": _state('yellow.500'),
-                                     "stopped": _state('red.500'),
+                                     "pending": _state('indigo.500'),
+                                     "running": _state('primary'),
+                                     "shutting-down": _state('coral.600'),
+                                     "stopped": _state('peacock.500'),
                                  },
                              },
                         {'name': 'Instance Type',   'key': 'data.compute.instance_type'},
@@ -1005,9 +1005,9 @@ def _create_sub_data():
                             'type': "enum",
                             'options':
                                  {
-                                     "spot": _badge('coral.500'),
-                                     "scheduled": _badge('yellow.500'),
-                                     "normal": _badge('green.500')
+                                     "spot": _badge('indigo.500'),
+                                     "scheduled": _badge('coral.600'),
+                                     "normal": _badge('primary')
                                  }
                             },
                         {'name': 'Key Pair',        'key': 'data.compute.keypair'},
@@ -1191,7 +1191,7 @@ def _create_sub_data():
                     'type': 'enum',
                     'options':
                         {
-                            'internet-facing': _badge('green.500'),
+                            'internet-facing': _badge('indigo.500'),
                             'internal': _badge('coral.500')
                         },
                  },

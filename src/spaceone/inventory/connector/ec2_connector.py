@@ -503,18 +503,17 @@ def _list_instances(client, query, instance_ids, region_name, secret_data):
             print(f'Return now, no data at {region_name}')
             return resource_list, region_name
 
+        client_ec2, resource_ec2 = _set_connect(secret_data, region_name, "ec2")
         client_autoscaling, resource_autoscaling = _set_connect(secret_data, region_name, "autoscaling")
         client_elb, resource_elb = _set_connect(secret_data, region_name, "elb")
         client_elbv2, resource_elbv2 = _set_connect(secret_data, region_name, "elbv2")
-
 
         auto_scaling_groups = client_autoscaling.describe_auto_scaling_groups(**autoscaling_query)["AutoScalingGroups"]
         launch_configurations = client_autoscaling.describe_launch_configurations()["LaunchConfigurations"]
 
         elbs = client_elb.describe_load_balancers()
         elbs_v2 = client_elbv2.describe_load_balancers()
-
-
+        _ec2 = client_ec2.describe_instances()
 
         target_groups = client_elbv2.describe_target_groups()["TargetGroups"]
 
@@ -536,7 +535,6 @@ def _list_instances(client, query, instance_ids, region_name, secret_data):
     # Find Resources
     instance_types = set([])
     for instance in instances:
-
 
         owner_id = instance['OwnerId']
         instance = instance['Instances'][0]
@@ -588,7 +586,6 @@ def _list_instances(client, query, instance_ids, region_name, secret_data):
     # Fill Resource Data
     for instance_id, instance in instance_dic.items():
         instance_itype = ec2_type.get(instance['InstanceType'], {'name': 'unknown', 'core': 0, 'memory': 0})
-
         image_info = image_dic.get(instance['ImageId'], {})
 
         dic = {}
@@ -745,6 +742,13 @@ def _list_instances(client, query, instance_ids, region_name, secret_data):
         if 'PublicIpAddress' in instance.keys():
             dic["data"]["public_ip_address"] = instance["PublicIpAddress"]
 
+        ##################
+        # data.PublicDnsName #
+        ##################
+
+        if 'PublicDnsName' in instance.keys():
+            dic["data"]["public_dns"] = instance["PublicDnsName"]
+
         ################
         # data.nics
         ################
@@ -758,17 +762,15 @@ def _list_instances(client, query, instance_ids, region_name, secret_data):
             nic_dic['mac_address'] = nic['MacAddress']
 
             # 'PrivateIpAddresses': [{'Primary': True, 'PrivateDnsName': 'ip-172-16-18-84.ap-northeast-2.compute.internal', 'PrivateIpAddress': '172.16.18.84'}
-
-            nic_dic['ip_addresses'] = []
             subnet = subnet_dic[nic['SubnetId']]
+            nic_dic['cidr'] = subnet['CidrBlock']
+            nic_dic['ip_addresses'] = []
+
+
             ip_list = []
 
             for ip_item in nic['PrivateIpAddresses']:
-                nic_ip = {}
-                nic_ip['ip_address'] = ip_item['PrivateIpAddress']
                 ip_list.append(ip_item['PrivateIpAddress'])
-                nic_ip['cidr'] = subnet['CidrBlock']
-                nic_dic['ip_addresses'].append(nic_ip)
 
             nic_dic["tags"] = {}
 
@@ -776,14 +778,12 @@ def _list_instances(client, query, instance_ids, region_name, secret_data):
                 nic_dic["public_ip_address"] = nic["Association"]["PublicIp"]
                 nic_dic['tags']["public_dns"] = nic["Association"]["PublicDnsName"]
 
-                if instance_id in eip_dic.keys() and nic["NetworkInterfaceId"] == eip_dic[instance_id][
-                    "NetworkInterfaceId"]:
+                if instance_id in eip_dic.keys() and nic["NetworkInterfaceId"] == eip_dic[instance_id]["NetworkInterfaceId"]:
                     nic_dic['tags']["eip"] = eip_dic[instance_id]["PublicIp"]
 
-            nic_dic['tags']["ip_list"] = ip_list
-
+            nic_dic['ip_addresses'] = ip_list
             dic['nics'].append(nic_dic)
-            dic['ip_addresses'].append(nic['PrivateIpAddress'])
+
 
         dic['nics'] = sorted(dic['nics'], key=lambda k: k['device_index'])
 
@@ -824,9 +824,7 @@ def _list_instances(client, query, instance_ids, region_name, secret_data):
         for tg in target_group_dic:
 
             if target_group_dic[tg]["TargetType"] == "instance":
-                print(target_group_dic[tg])
                 for target in target_group_dic[tg]["TargetHealthDescriptions"]:
-
 
                     if target["Target"]["Id"] == instance_id:
                         elb_list.append(target_group_dic[tg]["LoadBalancerArns"][0])
@@ -881,7 +879,7 @@ def _list_instances(client, query, instance_ids, region_name, secret_data):
         #########################
         #     data.tags          #
         #########################
-        dic["data"]["tags"] = instance["Tags"]
+        dic["data"]["instance_tags"] = instance["Tags"]
 
 
 
@@ -1018,15 +1016,28 @@ def _create_sub_data():
                              'type': "enum",
                              'options':
                                  {
-                                     "true": _badge('green.500'),
-                                     "false": _badge('gray.200')
+                                     'true': _badge('indigo.500'),
+                                     'false': _badge('coral.600')
                                  },
                              },
                         {'name': 'AMI ID',           'key': 'data.compute.image'},
                         {'name': 'Region',          'key': 'data.compute.region_name'},
                         {'name': 'Availability Zone', 'key': 'data.compute.az'},
+                        {'name': 'Public DNS', 'key': 'data.public_dns'},
                         {'name': 'Public IP', 'key': 'data.public_ip_address'},
-                        {'name': 'Security Group', 'key': 'data.compute.security_groups',
+                        # {'name': 'Elastic IPs', 'key': 'data.eip',
+                        #    "type": "list",
+                        #    "options": {
+                        #         "item": {
+                        #             "type": "badge",
+                        #             "options": {
+                        #                 "outline_color": "violet.500"
+                        #             }
+                        #         },
+                        #         "delimiter": "  "
+                        #     }
+                        #  },
+                        {'name': 'Security Groups', 'key': 'data.compute.security_groups',
                             "type": "list",
                             "options": {
                                 "item": {
@@ -1035,7 +1046,7 @@ def _create_sub_data():
                                         "outline_color": "violet.500"
                                     }
                                 },
-                                "delimiter": "  "
+                                "delimiter": "<br>"
                             }
                         },
                         {'name': 'Account ID',      'key': 'data.compute.account_id'},
@@ -1065,8 +1076,6 @@ def _create_sub_data():
                        ]
         }
     }
-
-
 
     aws_ec2 = {
         'name': 'AWS EC2',
@@ -1117,7 +1126,7 @@ def _create_sub_data():
             'fields': [
                 {'name': 'Index', 'key': 'device_index'},
                 {'name': 'MAC Address', 'key': 'mac_address'},
-                {'name': 'IP Addresses', 'key': 'tags.ip_list',
+                {'name': 'IP Addresses', 'key': 'ip_addresses',
                      'type': 'list',
                      'options': {
                          'item': {
@@ -1190,11 +1199,11 @@ def _create_sub_data():
         }
     }
 
-    tags = {
+    instance_tags = {
         'name': 'Tags',
         'type': 'table',
         'options': {
-            'root_path': 'data.tags',
+            'root_path': 'data.instance_tags',
             'fields': [
                 {'name': 'Key', 'key': 'Key'},
                 {'name': 'Value', 'key': 'Value'}
@@ -1202,7 +1211,7 @@ def _create_sub_data():
         }
     }
 
-    sub_data = [aws_ec2, disk, nic, sg_rules, load_balancers, tags]
+    sub_data = [aws_ec2, disk, nic, sg_rules, load_balancers, instance_tags]
     return sub_data
 
 

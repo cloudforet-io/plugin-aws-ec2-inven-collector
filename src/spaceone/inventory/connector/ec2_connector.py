@@ -994,10 +994,10 @@ def _create_sub_data():
                              'type': 'enum',
                              'options':
                                  {
-                                     "pending": _state('indigo.500'),
-                                     "running": _state('primary'),
-                                     "shutting-down": _state('coral.600'),
-                                     "stopped": _state('peacock.500'),
+                                     "pending": _state('yellow.500'),
+                                     "running": _state('green.500'),
+                                     "shutting-down": _state('gray.500'),
+                                     "stopped": _state('red.500'),
                                  },
                              },
                         {'name': 'Instance Type',   'key': 'data.compute.instance_type'},

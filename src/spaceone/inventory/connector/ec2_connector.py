@@ -9,17 +9,15 @@ import boto3
 import json
 import requests
 import logging
-import urllib.request
-import pprint
-
+import datetime
+import traceback
 from multiprocessing import Pool
-
-from datetime import datetime
 from spaceone.core.transaction import Transaction
 from spaceone.inventory.error import *
 from spaceone.core.error import *
 from spaceone.core import utils
 from spaceone.core.connector import BaseConnector
+
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -103,24 +101,22 @@ class EC2Connector(BaseConnector):
             })
 
         with Pool(NUMBER_OF_CONCURRENT) as pool:
-
             result = pool.map(discover_ec2, params)
+            if result:
+                for resources in result:
+                    #print(f'resources: {resources}')
+                    (collected_resources, region_name) = resources
+                    if len(collected_resources) > 0:
+                        region_name_list.append(region_name)
 
-            for resources in result:
+                    for resource in collected_resources:
+                        try:
+                            response = _prepare_response_schema()
+                            response['resource'] = resource
+                            yield response
 
-                #print(f'resources: {resources}')
-                (collected_resources, region_name) = resources
-                if len(collected_resources) > 0:
-                    region_name_list.append(region_name)
-
-                for resource in collected_resources:
-                    try:
-                        response = _prepare_response_schema()
-                        response['resource'] = resource
-
-                        yield response
-                    except Exception as e:
-                        _LOGGER.error(f'[collect_info] skip return {resource}, {e}')
+                        except Exception as e:
+                            _LOGGER.error(f'[collect_info] skip return {resource}, {e}')
 
         # Return FilterCache
         try:
@@ -244,29 +240,39 @@ def discover_ec2(params):
         return resources
     except Exception as e:
         _LOGGER.error(f'[discover_ec2] skip region: {params["region_name"]}, {e}')
+        _LOGGER.error(traceback.format_exc())
 
-
-def _get_OS_distro(os):
+def _set_os_distro_env():
     os_distros = []
     os_distros.append({'centos': ['centos']})
     os_distros.append({'ubuntu': ['ubuntu']})
     os_distros.append({'redhat': ['rhel']})
     os_distros.append({'debian': ['debian']})
     os_distros.append({'fedora': ['fedora']})
+    os_distros.append({'suse': ['suse']})
+    os_distros.append({'Windows_Server-2019': ['windows', '2019', 'r2', 'standard']})
     os_distros.append({'win2012r2-std': ['windows', '2012', 'r2', 'standard']})
     os_distros.append({'win2008r2-std': ['windows', '2008', 'r2', 'standard']})
-    os_distros.append({'amazonlinux': ['amazon']})
-    os_distros.append({'amazonlinux': ['ami']})
+    os_distros.append({'amazonlinux': ['amazon', 'amzn2', 'ami']})
+    return os_distros
 
-    for os_distro in os_distros:
-        flag = True
-        for v in list(os_distro.values())[0]:
-            flag = (v in os.lower())
-
-        if flag:
-            return list(os_distro.keys())[0]
-
-    return 'unknown'
+def _get_OS_distro(os, os_type):
+    matched_os_distro = None
+    if(len(os) > 0):
+        os_distros = _set_os_distro_env()
+        osl = os.lower()
+        for os_distro in os_distros:
+            os_term = list(os_distro.values())[0]
+            if any(ext in osl for ext in os_term):
+                if(os_term[0] == 'windows' and os_term[1] not in osl):
+                    continue
+                else:
+                    matched_os_distro = list(os_distro.keys())[0]
+        if (matched_os_distro == None):
+            matched_os_distro = os_type
+    else:
+        matched_os_distro = os_type
+    return matched_os_distro
 
 
 def _get_image_info(client, ids=None):
@@ -514,7 +520,6 @@ def _list_instances(client, query, instance_ids, region_name, secret_data):
         elbs = client_elb.describe_load_balancers()
         elbs_v2 = client_elbv2.describe_load_balancers()
         _ec2 = client_ec2.describe_instances()
-
         target_groups = client_elbv2.describe_target_groups()["TargetGroups"]
 
     except Exception as e:
@@ -555,7 +560,6 @@ def _list_instances(client, query, instance_ids, region_name, secret_data):
             vpc_dic[nic["VpcId"]] = None
 
         for volume in instance['BlockDeviceMappings']:
-
             volume_dic[volume['Ebs']['VolumeId']] = None
 
     ec2_type = _get_instance_type(client, list(instance_types))
@@ -620,7 +624,6 @@ def _list_instances(client, query, instance_ids, region_name, secret_data):
             if "Instances" in auto_scaling_group.keys():
                 for asg_instances in auto_scaling_group["Instances"]:
                     if asg_instances["InstanceId"] == instance_id:
-                        #print(auto_scaling_group)
                         dic["data"]["auto_scaling_group"]["name"] = auto_scaling_group["AutoScalingGroupName"]
                         dic["data"]["auto_scaling_group"]["arn"] = auto_scaling_group["AutoScalingGroupARN"]
                         if "LaunchConfigurationName" in auto_scaling_group.keys():
@@ -637,8 +640,10 @@ def _list_instances(client, query, instance_ids, region_name, secret_data):
         #############
         dic['data']['os'] = {}
         dic['data']['os']['os_arch'] = image_info.get('Architecture', '')
-        dic['data']['os']['os_distro'] = _get_OS_distro(image_info.get('Name', ''))
+        dic['data']['os']['os_distro'] = _get_OS_distro(image_info.get('Name', ''), instance.get('Platform', 'LINUX').upper())
 
+
+        
         ################
         # data.compute
         ################
@@ -654,7 +659,12 @@ def _list_instances(client, query, instance_ids, region_name, secret_data):
         if 'KeyName' in instance:
             dic['data']['compute']['keypair'] = instance['KeyName']
         dic["data"]["compute"]["instance_state"] = instance["State"]["Name"]
-        dic["data"]["compute"]["launched_at"] = instance["LaunchTime"].strftime('%Y-%m-%d')
+
+        if isinstance(instance["LaunchTime"], datetime.date):
+            utc_time = f'{instance["LaunchTime"].isoformat()}Z'
+            dic["data"]["compute"]["launched_at"] = utc_time
+        else:
+            dic["data"]["compute"]["launched_at"] = instance["LaunchTime"].strftime('%Y-%m-%d %H:%M:%S')
 
         ################
         # data.aws
@@ -665,6 +675,8 @@ def _list_instances(client, query, instance_ids, region_name, secret_data):
         dic["data"]["aws"]["ebs_optimized"] = instance["EbsOptimized"]
 
         dic["data"]["aws"]["lifecycle"] = instance.get("InstanceLifecycle", 'normal')
+
+        dic["data"]["aws"]["tags"] = instance["Tags"]
 
         if "IamInstanceProfile" in instance.keys():
             dic["data"]["aws"]["iam_instance_profile"] = {}
@@ -742,6 +754,9 @@ def _list_instances(client, query, instance_ids, region_name, secret_data):
         if 'PublicIpAddress' in instance.keys():
             dic["data"]["public_ip_address"] = instance["PublicIpAddress"]
 
+        if 'Ipv6Addresses'in instance.keys():
+            dic["data"]["ipv6_ips"] = instance["Ipv6Addresses"]
+
         ##################
         # data.PublicDnsName #
         ##################
@@ -755,6 +770,7 @@ def _list_instances(client, query, instance_ids, region_name, secret_data):
 
         # nics tags 삭제 별로 필요 없음
         dic['nics'] = []
+        instance_eip = []
 
         for nic in instance['NetworkInterfaces']:
             nic_dic = {}
@@ -780,12 +796,14 @@ def _list_instances(client, query, instance_ids, region_name, secret_data):
 
                 if instance_id in eip_dic.keys() and nic["NetworkInterfaceId"] == eip_dic[instance_id]["NetworkInterfaceId"]:
                     nic_dic['tags']["eip"] = eip_dic[instance_id]["PublicIp"]
+                    instance_eip.append(eip_dic[instance_id]["PublicIp"])
 
             nic_dic['ip_addresses'] = ip_list
             dic['nics'].append(nic_dic)
 
 
         dic['nics'] = sorted(dic['nics'], key=lambda k: k['device_index'])
+        dic["data"]["compute"]['eip'] = instance_eip
 
         ###############
         # data.disk
@@ -809,7 +827,7 @@ def _list_instances(client, query, instance_ids, region_name, secret_data):
             disk_dic["tags"]["encrypted"] = volume["Encrypted"]
             disk_dic["tags"]['volume_id'] = volume['VolumeId']
             disk_dic["tags"]['volume_type'] = volume['VolumeType']
-            print(volume['VolumeType'])
+
             dic['disks'].append(disk_dic)
             device_index += 1
 
@@ -822,14 +840,11 @@ def _list_instances(client, query, instance_ids, region_name, secret_data):
         target_port_dic = {}
 
         for tg in target_group_dic:
-
             if target_group_dic[tg]["TargetType"] == "instance":
                 for target in target_group_dic[tg]["TargetHealthDescriptions"]:
-
                     if target["Target"]["Id"] == instance_id:
                         elb_list.append(target_group_dic[tg]["LoadBalancerArns"][0])
 
-                        #print(target_group_dic[tg]["LoadBalancerArns"][0],target["Target"]["Port"])
                         if target_group_dic[tg]["LoadBalancerArns"][0] in target_port_dic.keys():
                             target_port_dic[target_group_dic[tg]["LoadBalancerArns"][0]].append(target["Target"]["Port"])
                         else:
@@ -845,7 +860,7 @@ def _list_instances(client, query, instance_ids, region_name, secret_data):
 
                 nic_ip_list = []
                 for ni in dic['nics']:
-                    nic_ip_list.extend(ni["tags"]["ip_list"])
+                    nic_ip_list.extend(ni["ip_addresses"])
 
                 overlaped_ip = list(set(target_ip_list).intersection(nic_ip_list))
                 if len(overlaped_ip) > 0:
@@ -861,8 +876,6 @@ def _list_instances(client, query, instance_ids, region_name, secret_data):
                             target["Target"]["Port"])
 
         elb_list = list(set(elb_list))
-        #print(target_port_dic)
-        #print(instance_id, elb_list)
 
         for elb_lis in elb_list:
             instance_elb_dic = {}
@@ -875,12 +888,6 @@ def _list_instances(client, query, instance_ids, region_name, secret_data):
             instance_elb_dic["tags"]["arn"] = elb_dic[elb_lis]["LoadBalancerArn"]
 
             dic["data"]["load_balancers"].append(instance_elb_dic)
-
-        #########################
-        #     data.tags          #
-        #########################
-        dic["data"]["instance_tags"] = instance["Tags"]
-
 
 
         ################################
@@ -1025,18 +1032,30 @@ def _create_sub_data():
                         {'name': 'Availability Zone', 'key': 'data.compute.az'},
                         {'name': 'Public DNS', 'key': 'data.public_dns'},
                         {'name': 'Public IP', 'key': 'data.public_ip_address'},
-                        # {'name': 'Elastic IPs', 'key': 'data.eip',
-                        #    "type": "list",
-                        #    "options": {
-                        #         "item": {
-                        #             "type": "badge",
-                        #             "options": {
-                        #                 "outline_color": "violet.500"
-                        #             }
-                        #         },
-                        #         "delimiter": "  "
-                        #     }
-                        #  },
+                        {'name': 'IPv6 IPs', 'key': 'data.ipv6_ips',
+                            "type": "list",
+                            "options": {
+                                "item": {
+                                    "type": "badge",
+                                    "options": {
+                                        "outline_color": "violet.500"
+                                    }
+                                },
+                                "delimiter": "  "
+                            }
+                        },
+                        {'name': 'Elastic IPs', 'key': 'data.compute.eip',
+                           "type": "list",
+                           "options": {
+                                "item": {
+                                    "type": "badge",
+                                    "options": {
+                                        "outline_color": "violet.500"
+                                    }
+                                },
+                                "delimiter": "  "
+                            }
+                         },
                         {'name': 'Security Groups', 'key': 'data.compute.security_groups',
                             "type": "list",
                             "options": {
@@ -1050,7 +1069,7 @@ def _create_sub_data():
                             }
                         },
                         {'name': 'Account ID',      'key': 'data.compute.account_id'},
-                        {'name': 'Launched Time ', 'key': 'data.compute.launched_at'}
+                        {'name': 'Launched At ', 'key': 'data.compute.launched_at'}
                         ]
                 }
             }
@@ -1199,11 +1218,11 @@ def _create_sub_data():
         }
     }
 
-    instance_tags = {
-        'name': 'Tags',
+    aws_tag = {
+        'name': 'AWS Tags',
         'type': 'table',
         'options': {
-            'root_path': 'data.instance_tags',
+            'root_path': 'data.aws.tags',
             'fields': [
                 {'name': 'Key', 'key': 'Key'},
                 {'name': 'Value', 'key': 'Value'}
@@ -1211,7 +1230,7 @@ def _create_sub_data():
         }
     }
 
-    sub_data = [aws_ec2, disk, nic, sg_rules, load_balancers, instance_tags]
+    sub_data = [aws_ec2, aws_tag, disk, nic, sg_rules, load_balancers]
     return sub_data
 
 
@@ -1276,21 +1295,22 @@ if __name__ == "__main__":
     conn = EC2Connector(Transaction(), secret_data)
     opts = conn.verify({}, secret_data)
 
-    print(opts)
+    #print(opts)
     #query = {'region_name': ['ap-northeast-1']}
     #query = {'instance_id': ['i-0745c928020bed89f'], 'region_name': ['ap-northeast-2']}
     #query = {'instance_id': ['i-0873656da2e3af584', 'i-123'], 'region_name': ['ap-northeast-1', 'ap-northeast-2']}
     # query = {'instance_id': ['i-0873656da2e3af584'], 'region_name': ['ap-northeast-2']}
     query = {}
-    from datetime import datetime
 
-    a = datetime.now()
+
+    a = datetime.datetime.now()
     resource_stream = conn.collect_info(query=query, secret_data=secret_data)
-    b = datetime.now()
+    b = datetime.datetime.now()
     c = b - a
     print(f'Computing time: {c}')
-    import pprint
-    for resource in resource_stream:
-        pprint.pprint(resource)
+
+    # import pprint
+    # for resource in resource_stream:
+    #     pprint.pprint(resource)
 
 

@@ -252,7 +252,7 @@ def _set_os_distro_env():
     os_distros.append({'debian': ['debian']})
     os_distros.append({'fedora': ['fedora']})
     os_distros.append({'suse': ['suse']})
-    os_distros.append({'Windows_Server-2019': ['windows', '2019', 'r2', 'standard']})
+    os_distros.append({'win2019r2-std': ['windows', '2019', 'r2', 'standard']})
     os_distros.append({'win2012r2-std': ['windows', '2012', 'r2', 'standard']})
     os_distros.append({'win2008r2-std': ['windows', '2008', 'r2', 'standard']})
     os_distros.append({'amazonlinux': ['amazon', 'amzn2', 'ami']})
@@ -270,12 +270,12 @@ def _get_OS_distro(os, os_type):
                     continue
                 else:
                     matched_os_distro = list(os_distro.keys())[0]
+
         if (matched_os_distro == None):
             matched_os_distro = os_type
     else:
         matched_os_distro = os_type
     return matched_os_distro
-
 
 def _get_image_info(client, ids=None):
     result = {}
@@ -289,7 +289,6 @@ def _get_image_info(client, ids=None):
 
     return result
 
-
 def _get_volume_info(client, ids=None):
     result = {}
     query = {}
@@ -297,12 +296,23 @@ def _get_volume_info(client, ids=None):
         query['VolumeIds'] = ids
 
     volumes = client.describe_volumes(**query)
-
     for volume in volumes['Volumes']:
         result[volume['VolumeId']] = volume
 
     return result
 
+def _get_protocol_info(client, ids=None):
+    result = {}
+    query = {}
+    if ids:
+        query['ListenerArns'] = ids
+
+    volumes = client.describe_listeners(**query)
+
+    for volume in volumes['Volumes']:
+        result[volume['VolumeId']] = volume
+
+    return result
 
 def _get_security_group_info(client, ids=None):
     result = {}
@@ -361,6 +371,12 @@ def _get_elasticip_info(client, ids=None):
 
     return result
 
+def _get_listeners_info(listeners, l_key, key_to_look):
+    result = []
+    if l_key in listeners and len(listeners.get(l_key, 0)) > 0:
+        result =[s[key_to_look] for s in listeners.get(l_key)]
+
+    return result
 
 def _get_security_group_rules(sg_info):
     sg_rules = []
@@ -524,6 +540,7 @@ def _list_instances(client, query, instance_ids, region_name, secret_data):
         _ec2 = client_ec2.describe_instances()
         target_groups = client_elbv2.describe_target_groups()["TargetGroups"]
 
+
     except Exception as e:
         print(f'[_list_instances] Fail to describe instances: {e}')
         return resource_list, region_name
@@ -538,6 +555,7 @@ def _list_instances(client, query, instance_ids, region_name, secret_data):
     target_group_dic = {}
     elb_dic = {}
     launch_configuration_dic = {}
+    listener_dic ={}
 
     # Find Resources
     instance_types = set([])
@@ -577,7 +595,11 @@ def _list_instances(client, query, instance_ids, region_name, secret_data):
 
     # for elb list
     for elb_v2 in elbs_v2["LoadBalancers"]:
+        listener_query = {}
         elb_dic[elb_v2["LoadBalancerArn"]] = elb_v2
+        listener_query["LoadBalancerArn"] = elb_v2["LoadBalancerArn"]
+        listener_info = client_elbv2.describe_listeners(**listener_query)
+        elb_dic[elb_v2["LoadBalancerArn"]]['listeners_info'] = listener_info
 
     for launch_configuration in launch_configurations:
         launch_configuration_dic[launch_configuration["LaunchConfigurationName"]] = launch_configuration
@@ -588,6 +610,7 @@ def _list_instances(client, query, instance_ids, region_name, secret_data):
     subnet_dic = _get_subnet_info(client, list(subnet_dic.keys()))
     vpc_dic = _getvpcInfo(client, list(vpc_dic.keys()))
     eip_dic = _get_elasticip_info(client, instance['InstanceId'])
+
 
     # Fill Resource Data
     for instance_id, instance in instance_dic.items():
@@ -700,7 +723,6 @@ def _list_instances(client, query, instance_ids, region_name, secret_data):
             vpc_tags = vpc_dic[instance['VpcId']]["Tags"]
 
         for vpc_tag in vpc_tags:
-
             if vpc_tag['Key'] == "Name":
                 dic['data']['vpc']['vpc_name'] = vpc_tag["Value"]
 
@@ -744,9 +766,7 @@ def _list_instances(client, query, instance_ids, region_name, secret_data):
 
         for security_group in instance['SecurityGroups']:
             sg_info = sg_dic[security_group['GroupId']]
-
             dic['data']['compute']['security_groups'].append(sg_info['name'])
-
             dic['data']['security_group_rules'] += sg_info['rules']
 
         ##################
@@ -786,7 +806,6 @@ def _list_instances(client, query, instance_ids, region_name, secret_data):
 
 
             ip_list = []
-
             for ip_item in nic['PrivateIpAddresses']:
                 ip_list.append(ip_item['PrivateIpAddress'])
 
@@ -795,14 +814,11 @@ def _list_instances(client, query, instance_ids, region_name, secret_data):
             if "Association" in nic.keys():
                 nic_dic["public_ip_address"] = nic["Association"]["PublicIp"]
                 nic_dic['tags']["public_dns"] = nic["Association"]["PublicDnsName"]
-
                 if instance_id in eip_dic.keys() and nic["NetworkInterfaceId"] == eip_dic[instance_id]["NetworkInterfaceId"]:
                     nic_dic['tags']["eip"] = eip_dic[instance_id]["PublicIp"]
                     instance_eip.append(eip_dic[instance_id]["PublicIp"])
-
             nic_dic['ip_addresses'] = ip_list
             dic['nics'].append(nic_dic)
-
 
         dic['nics'] = sorted(dic['nics'], key=lambda k: k['device_index'])
         dic["data"]["compute"]['eip'] = instance_eip
@@ -825,10 +841,9 @@ def _list_instances(client, query, instance_ids, region_name, secret_data):
             disk_dic['device_index'] = device_index
             disk_dic['size'] = float(volume['Size'])
 
-            disk_dic["tags"] = {}
             disk_src_keys = ['Iops', 'Encrypted', 'VolumeId', 'VolumeType']
             disk_target_keys = ['iops', 'encrypted', 'volume_id', 'volume_type']
-            _dick_input_checker(volume, disk_dic["tags"], disk_src_keys, disk_target_keys)
+            _dick_input_checker(volume, disk_dic, "tags", disk_src_keys, disk_target_keys)
 
             dic['disks'].append(disk_dic)
             device_index += 1
@@ -846,13 +861,14 @@ def _list_instances(client, query, instance_ids, region_name, secret_data):
                 for target in target_group_dic[tg]["TargetHealthDescriptions"]:
                     if target["Target"]["Id"] == instance_id:
                         elb_list.append(target_group_dic[tg]["LoadBalancerArns"][0])
-
                         if target_group_dic[tg]["LoadBalancerArns"][0] in target_port_dic.keys():
                             target_port_dic[target_group_dic[tg]["LoadBalancerArns"][0]].append(target["Target"]["Port"])
                         else:
                             target_port_dic[target_group_dic[tg]["LoadBalancerArns"][0]] = []
                             target_port_dic[target_group_dic[tg]["LoadBalancerArns"][0]].append(
                                 target["Target"]["Port"])
+
+
 
             if target_group_dic[tg]["TargetType"] == "ip":
 
@@ -880,16 +896,17 @@ def _list_instances(client, query, instance_ids, region_name, secret_data):
         elb_list = list(set(elb_list))
 
         for elb_lis in elb_list:
-            instance_elb_dic = {}
-            instance_elb_dic["name"] = elb_dic[elb_lis]["LoadBalancerName"]
-            instance_elb_dic["type"] = elb_dic[elb_lis]["Type"]
-            instance_elb_dic["dns"] = elb_dic[elb_lis]["DNSName"]
-            instance_elb_dic["port"] = target_port_dic[elb_lis]
-            instance_elb_dic["tags"] = {}
-            instance_elb_dic["tags"]["scheme"] = elb_dic[elb_lis]["Scheme"]
-            instance_elb_dic["tags"]["arn"] = elb_dic[elb_lis]["LoadBalancerArn"]
-
-            dic["data"]["load_balancers"].append(instance_elb_dic)
+            elb_single = {}
+            elb_k_term = elb_dic[elb_lis]
+            elb_single["name"] = elb_k_term["LoadBalancerName"]
+            elb_single["type"] = elb_k_term["Type"]
+            elb_single["dns"] = elb_k_term["DNSName"]
+            elb_single["port"] = _get_listeners_info(elb_k_term['listeners_info'], 'Listeners', 'Port')
+            elb_single["protocol"] = _get_listeners_info(elb_k_term['listeners_info'], 'Listeners', 'Protocol')
+            elb_single["tags"] = {}
+            elb_single["tags"]["scheme"] = elb_k_term["Scheme"]
+            elb_single["tags"]["arn"] = elb_k_term["LoadBalancerArn"]
+            dic["data"]["load_balancers"].append(elb_single)
 
 
         ################################
@@ -968,11 +985,12 @@ def _create_table_layout():
     table = {}
     return table
 
-def _dick_input_checker(source, target, source_keys, target_keys):
+def _dick_input_checker(source, target, gen_key, source_keys, target_keys):
+   target[gen_key] ={}
    for i, key in enumerate(source_keys):
         if key in source:
             set_key = target_keys[i]
-            target[set_key] = source[key]
+            target[gen_key][set_key] = source[key]
 
 def _badge(color):
     return {'options': {'background_color': color},
@@ -1182,9 +1200,9 @@ def _create_sub_data():
                          },
                  },
                 {'name': 'Name', 'key': 'security_group_name'},
-                {'name': 'Remote', 'key': 'remote'},
-                {'name': 'Port', 'key': 'port'},
                 {'name': 'Protocol', 'key': 'protocol'},
+                {'name': 'Port Range', 'key': 'port'},
+                {'name': 'Remote', 'key': 'remote'},
                 {'name': 'Description', 'key': 'description'}
             ]
         }
@@ -1205,6 +1223,14 @@ def _create_sub_data():
                          "network": _badge('indigo.500'),
                          "application": _badge('coral.600')
                      },
+                 },
+                {'name': 'Protocol', 'key': 'protocol',
+                 'type': 'list',
+                 'options': {
+                     'item': {
+                         'type': 'text',
+                     },
+                 }
                  },
                 {'name': 'Port', 'key': 'port',
                  'type': 'list',

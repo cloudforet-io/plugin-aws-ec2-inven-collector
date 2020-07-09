@@ -227,6 +227,7 @@ def discover_ec2(params):
     print(f'[discover_ec2] {params["region_name"]}')
 
     client, resource = _set_connect(params['secret_data'], params['region_name'])
+
     try:
         resources = _list_instances(client,
                                     params['query'],
@@ -236,11 +237,12 @@ def discover_ec2(params):
                                     params['secret_data']
                                     )
 
-
         return resources
+
     except Exception as e:
         _LOGGER.error(f'[discover_ec2] skip region: {params["region_name"]}, {e}')
         _LOGGER.error(traceback.format_exc())
+
 
 def _set_os_distro_env():
     os_distros = []
@@ -812,6 +814,7 @@ def _list_instances(client, query, instance_ids, region_name, secret_data):
         dic['disks'] = []
         device_index = 0
         for volume in instance['BlockDeviceMappings']:
+
             disk_dic = {}
 
             disk_type = list(volume.keys())[-1]
@@ -823,10 +826,9 @@ def _list_instances(client, query, instance_ids, region_name, secret_data):
             disk_dic['size'] = float(volume['Size'])
 
             disk_dic["tags"] = {}
-            disk_dic["tags"]["iops"] = volume["Iops"]
-            disk_dic["tags"]["encrypted"] = volume["Encrypted"]
-            disk_dic["tags"]['volume_id'] = volume['VolumeId']
-            disk_dic["tags"]['volume_type'] = volume['VolumeType']
+            disk_src_keys = ['Iops', 'Encrypted', 'VolumeId', 'VolumeType']
+            disk_target_keys = ['iops', 'encrypted', 'volume_id', 'volume_type']
+            _dick_input_checker(volume, disk_dic["tags"], disk_src_keys, disk_target_keys)
 
             dic['disks'].append(disk_dic)
             device_index += 1
@@ -860,7 +862,7 @@ def _list_instances(client, query, instance_ids, region_name, secret_data):
 
                 nic_ip_list = []
                 for ni in dic['nics']:
-                    nic_ip_list.extend(ni["ip_addresses"])
+                    nic_ip_list.extend(ni.get("ip_addresses", []))
 
                 overlaped_ip = list(set(target_ip_list).intersection(nic_ip_list))
                 if len(overlaped_ip) > 0:
@@ -965,6 +967,12 @@ def _create_table_layout():
 
     table = {}
     return table
+
+def _dick_input_checker(source, target, source_keys, target_keys):
+   for i, key in enumerate(source_keys):
+        if key in source:
+            set_key = target_keys[i]
+            target[set_key] = source[key]
 
 def _badge(color):
     return {'options': {'background_color': color},
@@ -1309,8 +1317,8 @@ if __name__ == "__main__":
     c = b - a
     print(f'Computing time: {c}')
 
-    # import pprint
-    # for resource in resource_stream:
-    #     pprint.pprint(resource)
+    import pprint
+    for resource in resource_stream:
+         pprint.pprint(resource)
 
 

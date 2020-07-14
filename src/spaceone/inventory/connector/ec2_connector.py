@@ -166,12 +166,14 @@ def create_session(secret_data: dict, options={}):
     except Exception as e:
         raise ERROR_INVALID_CREDENTIALS()
 
+
 def _check_secret_data(secret_data):
     if 'aws_access_key_id' not in secret_data:
         raise ERROR_REQUIRED_PARAMETER(key='secret.aws_access_key_id')
 
     if 'aws_secret_access_key' not in secret_data:
         raise ERROR_REQUIRED_PARAMETER(key='secret.aws_secret_access_key')
+
 
 def _create_session_with_access_key(aws_access_key_id, aws_secret_access_key):
     session = boto3.Session(aws_access_key_id=aws_access_key_id,
@@ -180,6 +182,7 @@ def _create_session_with_access_key(aws_access_key_id, aws_secret_access_key):
     sts = session.client('sts')
     sts.get_caller_identity()
     return session
+
 
 def _create_session_with_assume_role(aws_access_key_id, aws_secret_access_key, role_arn):
     session = _create_session_with_access_key(aws_access_key_id, aws_secret_access_key)
@@ -466,6 +469,7 @@ def _get_single_instance(client, instance_query, instance_ids):
             _LOGGER.debug(f'[_get_single_instance] failed: {e}')
     return instance_list
 
+
 def _get_instances(client, instance_query):
     instance_list = []
     limit = EC2_MAX_LIMIT
@@ -475,6 +479,20 @@ def _get_instances(client, instance_query):
     response_iterator = paginator.paginate(PaginationConfig=page_config, **instance_query)
     for response in response_iterator:
         instance_list.extend(response['Reservations'])
+    return instance_list
+
+
+def _get_instances_temp(client, instance_query):
+    instance_list = []
+    limit = EC2_MAX_LIMIT
+    page_size = 50
+    paginator = client.get_paginator('describe_instances')
+    page_config = {'MaxItems': limit, 'PageSize': page_size}
+    response_iterator = paginator.paginate(PaginationConfig=page_config, **instance_query)
+
+    for response in response_iterator:
+        instance_list.extend(response['Reservations'])
+
     return instance_list
 
 def _get_instance_type(client, instance_types):
@@ -500,11 +518,16 @@ def _list_instances(client, query, instance_ids, region_name, secret_data):
     # target_group_query["TargetGroupArn"] = 
     # "arn:aws:elasticloadbalancing:ap-northeast-2:072548720675:targetgroup/dev-tools-target-group/d9cd02f12787288e"
     try:
+        # if len(instance_ids) > 0:
+        #     # search per instances, since if one of instance_id does not exist, describe will be failed
+        #     instances = _get_single_instance(client, instance_query, instance_ids)
+        # else:
+        #     instances = _get_instances(client, instance_query)
+
         if len(instance_ids) > 0:
-            # search per instances, since if one of instance_id does not exist, describe will be failed
-            instances = _get_single_instance(client, instance_query, instance_ids)
-        else:
-            instances = _get_instances(client, instance_query)
+            instance_query['InstanceIds'] = instance_ids
+
+        instances = _get_instances_temp(client, instance_query)
 
         if len(instances) == 0:
             # Fast return if No resources
@@ -573,7 +596,7 @@ def _list_instances(client, query, instance_ids, region_name, secret_data):
             target_group_dic[target_group["TargetGroupArn"]] = target_group
             target_group_query["TargetGroupArn"] = target_group["TargetGroupArn"]
             target_group_health = client_elbv2.describe_target_health(**target_group_query)["TargetHealthDescriptions"]
-            target_group_dic[target_group["TargetGroupArn"]]["TargetHealthDescriptions"] = target_group_health
+            target_group_dic[target_group["TargetGroupArn"]]["TargetHealthDescriptionsTargetHealthDescriptions"] = target_group_health
 
     # for elb list
     for elb_v2 in elbs_v2["LoadBalancers"]:
@@ -856,6 +879,8 @@ def _list_instances(client, query, instance_ids, region_name, secret_data):
 
             if target_group_dic[tg]["TargetType"] == "ip":
 
+                # Target Type 이 IP 인경우, NIC LIST IP 값을 비교해서 mapping 될 경우 Target Port 정보를 넣어주면 끝.
+
                 target_ip_list = []
                 for target in target_group_dic[tg]["TargetHealthDescriptions"]:
                     target_ip_list.append(target["Target"]["Id"])
@@ -1006,15 +1031,15 @@ def _create_sub_data():
         'options': {
             'fields': [{'name': 'Instance ID',      'key': 'data.compute.instance_id'},
                        {'name': 'Instance State',   'key': 'data.compute.instance_state',
-                             'type': 'enum',
-                             'options':
-                                 {
-                                     "pending": _state('yellow.500'),
-                                     "running": _state('green.500'),
-                                     "shutting-down": _state('gray.500'),
-                                     "stopped": _state('red.500'),
-                                 },
+                         'type': 'enum',
+                         'options':
+                             {
+                                 "pending": _state('yellow.500'),
+                                 "running": _state('green.500'),
+                                 "shutting-down": _state('gray.500'),
+                                 "stopped": _state('red.500'),
                              },
+                         },
                         {'name': 'Instance Type',   'key': 'data.compute.instance_type'},
                         {'name': 'EC2 Lifecycle',   'key': 'data.aws.lifecycle',
                             'type': "enum",

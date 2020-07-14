@@ -1,1 +1,2 @@
 from spaceone.inventory.connector.ec2_connector import EC2Connector
+from spaceone.inventory.connector.ec2_connector_new import EC2Connector

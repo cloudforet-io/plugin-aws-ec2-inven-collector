@@ -98,6 +98,11 @@ class CollectorService(BaseService):
             }
         return {'options': capability}
 
+
+    def discover_ec2(self):
+
+
+
     @transaction
     @check_required(['options','secret_data', 'filter'])
     def list_resources(self, params):
@@ -115,4 +120,18 @@ class CollectorService(BaseService):
         options = params['options']
         secret_data = params['secret_data']
         filters = params['filter']
+
+
+        # STEP 1
+        # parameter setting
+
+        # STEP 2
+        # Multi processing
+        with Pool(NUMBER_OF_CONCURRENT) as pool:
+            result = pool.map(self.discover_ec2, params)
+
+        # STEP 3
+        # 취합 후 return
+
         return manager.list_resources(options, secret_data, filters)
+

@@ -54,7 +54,7 @@ class EC2Connector(BaseConnector):
     def list_regions(self):
         response = self.ec2_client.desribe_regions()
         return response['Regions']
-
+    #new added update
     def list_instances(self):
         ec2_instances = []
         paginator = self.ec2_client.get_paginator('describe_instances')

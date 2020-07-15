@@ -5,7 +5,8 @@ import logging
 from spaceone.core.error import *
 from spaceone.core.service import *
 from spaceone.core.pygrpc.message_type import *
-
+from multiprocessing import Pool
+from spaceone.inventory.connector.ec2_connector_new import EC2Connector
 from spaceone.inventory.error import *
 from spaceone.inventory.manager.collector_manager import CollectorManager
 
@@ -67,6 +68,7 @@ FILTER_FORMAT = [
 
 
 SUPPORTED_RESOURCE_TYPE = ['SERVER']
+NUMBER_OF_CONCURRENT = 4
 
 @authentication_handler
 class CollectorService(BaseService):
@@ -99,9 +101,9 @@ class CollectorService(BaseService):
         return {'options': capability}
 
 
-    def discover_ec2(self):
-
-
+    def discover_ec2(self,transaction, conf, secret_data, region_name, service):
+        ec2_connector = EC2Connector(None, None, secret_data, region_name, service)
+        ec2_connector.set_client()
 
     @transaction
     @check_required(['options','secret_data', 'filter'])
@@ -131,7 +133,13 @@ class CollectorService(BaseService):
             result = pool.map(self.discover_ec2, params)
 
         # STEP 3
+
+
         # 취합 후 return
 
         return manager.list_resources(options, secret_data, filters)
+
+
+
+
 

@@ -12,12 +12,9 @@ import datetime
 import traceback
 from multiprocessing import Pool
 from spaceone.core.transaction import Transaction
-from spaceone.inventory.error import *
 from spaceone.core.error import *
 from spaceone.core import utils
 from spaceone.core.connector import BaseConnector
-
-
 _LOGGER = logging.getLogger(__name__)
 
 RESOURCES = ['cloudformation', 'cloudwatch', 'dynamodb', 'ec2', 'glacier', 'iam', 'opsworks', 's3', 'sns', 'sqs']
@@ -57,7 +54,7 @@ class EC2Connector(BaseConnector):
     def list_regions(self):
         response = self.ec2_client.desribe_regions()
         return response['Regions']
-
+    #new added update
     def list_instances(self):
         ec2_instances = []
         paginator = self.ec2_client.get_paginator('describe_instances')
@@ -81,28 +78,112 @@ class EC2Connector(BaseConnector):
         launch_configurations = []
         paginator = self.asg_client.get_paginator('describe_launch_configurations')
 
-        for asg in paginator.get('LaunchConfigurations', []):
-            launch_configurations.append(asg)
+        # ? launch_configurations = paginator.get('LaunchConfigurations', [])
+        for auto_scaling_group in paginator.get('LaunchConfigurations', []):
+            launch_configurations.append(auto_scaling_group)
 
         return launch_configurations
 
     def list_launch_templates(self):
-        pass
+        launch_templates = []
+        paginator = self.asg_client.get_paginator('describe_launch_templates')
+        for l_template in paginator.get('LaunchTemplates', []):
+            launch_templates.append(l_template)
+
+        return launch_templates
 
     def list_load_balancers(self):
-        response = self.client.describe_load_balancers()
-
-        return response
+        load_balancers =[]
+        paginator = self.elbv2_client.get_paginator('describe_load_balancers')
+        for load_balancer in paginator.get('LoadBalancers', []):
+            load_balancers.append(load_balancer)
+        return load_balancers
 
     def list_target_groups(self):
-        response = self.client.describe_target_groups()
-
-        return response
+        paginator = self.elbv2_client.get_paginator('describe_target_groups')
+        target_groups = paginator.get('TargetGroups', [])
+        return target_groups
 
     def list_lb_listners(self):
-        response = self.client.describe_listeners()
+        paginator = self.elbv2_client.get_paginator('describe_listeners')
+        lb_listners = paginator.get('Listeners', [])
+        return lb_listners
 
-        return response
+    def list_security_group_info(self):
+        result = {}
+        query = {}
+        security_groups = self.ec2_client.describe_security_groups(**query)
+        for security_group in security_groups['SecurityGroups']:
+            result[security_group['GroupId']] = {}
+            result[security_group['GroupId']]['name'] = security_group['GroupName']
+
+        return result
+
+    def get_subnet_info(self, ids=None):
+        result = {}
+        query = {}
+        if ids:
+            query['SubnetIds'] = ids
+        subnets = self.ec2_client.describe_subnets(**query)
+        for subnet in subnets.get('Subnets',[]):
+            subnet_id = subnet.get('SubnetId')
+            result[subnet_id] = subnet
+
+        return result
+
+
+    def get_vpc_info(self, ids=None):
+
+        result = {}
+        query = {}
+        if ids:
+            query['VpcIds'] = ids
+
+        vpcs = self.ec2_client.describe_vpcs(**query)
+        for vpc in vpcs.get('Vpcs',[]):
+            vpc_id = vpc['VpcId']
+            result[vpc_id] = vpc
+
+        return result
+
+    def get_volume_info(self, ids=None):
+        result = {}
+        query = {}
+        if ids:
+            query['VolumeIds'] = ids
+
+        volumes = self.ec2_client.describe_volumes(**query)
+        for volume in volumes['Volumes']:
+            result[volume['VolumeId']] = volume
+        return result
+
+    def get_image_info(self, ids=None):
+        result = {}
+        query = {}
+        if ids:
+            query['ImageIds'] = ids
+
+        images = self.ec2_client.describe_images(**query)
+        for image in images['Images']:
+            result[image['ImageId']] = image
+
+        return result
+
+
+    def get_elasticip_info(self, ids=None):
+        result = {}
+        query = {}
+        filters = []
+
+        if ids:
+            # filters.append({'Name':key,'Values':[ids]})
+            query["Filters"] = filters
+        eips = self.ec2_client.describe_addresses(**query)
+        for eip in eips["Addresses"]:
+            if "InstanceId" in eip.keys():
+                result[eip["InstanceId"]] = eip
+
+        return result
 
     def _check_secret_data(self, secret_data):
         if 'aws_access_key_id' not in secret_data:

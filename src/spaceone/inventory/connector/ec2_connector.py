@@ -31,7 +31,7 @@ DEFAULT_FILE = 'ec2_type.json'
 
 EC2_MAX_LIMIT = 1000
 
-class EC2Connector(BaseConnector):
+class EC2ConnectorOLD(BaseConnector):
 
     def __init__(self, transaction, config):
         super().__init__(transaction, config)

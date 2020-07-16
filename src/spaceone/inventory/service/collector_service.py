@@ -1,17 +1,13 @@
 # -*- coding: utf-8 -*-
-
+import time
 import logging
-
-from spaceone.core.error import *
 from spaceone.core.service import *
-from spaceone.core.pygrpc.message_type import *
 from multiprocessing import Pool
-from spaceone.inventory.connector.ec2_connector_new import EC2Connector
-from spaceone.inventory.error import *
+import concurrent.futures
 from spaceone.inventory.manager.collector_manager import CollectorManager
 
 _LOGGER = logging.getLogger(__name__)
-
+DEFAULT_REGION = 'us-east-1'
 FILTER_FORMAT = [
     {
         'key': 'project_id',
@@ -66,14 +62,14 @@ FILTER_FORMAT = [
     }
 ]
 
-
 SUPPORTED_RESOURCE_TYPE = ['SERVER']
-NUMBER_OF_CONCURRENT = 4
+NUMBER_OF_CONCURRENT = 20
 
 @authentication_handler
 class CollectorService(BaseService):
     def __init__(self, metadata):
         super().__init__(metadata)
+        self.collector_manager: CollectorManager = self.locator.get_manager('CollectorManager')
 
     @transaction
     @check_required(['options','secret_data'])
@@ -100,11 +96,6 @@ class CollectorService(BaseService):
             }
         return {'options': capability}
 
-
-    def discover_ec2(self,transaction, conf, secret_data, region_name, service):
-        ec2_connector = EC2Connector(None, None, secret_data, region_name, service)
-        ec2_connector.set_client()
-
     @transaction
     @check_required(['options','secret_data', 'filter'])
     def list_resources(self, params):
@@ -118,28 +109,121 @@ class CollectorService(BaseService):
 
         Returns: list of resources
         """
-        manager = self.locator.get_manager('CollectorManager')
-        options = params['options']
-        secret_data = params['secret_data']
-        filters = params['filter']
 
+        start_time = time.time()
 
         # STEP 1
         # parameter setting
+        mp_params = self.set_params_for_regions(params)
+
+        with concurrent.futures.ThreadPoolExecutor(max_workers=NUMBER_OF_CONCURRENT) as executor:
+            print("[ EXECUTOR START ]")
+            future_executors = []
+            for mp_param in mp_params:
+                future_executors.append(executor.submit(self.collector_manager.list_resources, mp_param))
+
+            for future in concurrent.futures.as_completed(future_executors):
+                yield future.result()
 
         # STEP 2
         # Multi processing
-        with Pool(NUMBER_OF_CONCURRENT) as pool:
-            result = pool.map(self.discover_ec2, params)
+        # with Pool(NUMBER_OF_CONCURRENT) as pool:
+        #     pool_results = pool.map(self.collector_manager.list_resources, mp_params)
+        #
+        #     for pool_result in pool_results:
+        #         for result in pool_result:
+        #             response = {
+        #                 'state': 'SUCCESS',
+        #                 'resource_type': 'inventory.Server',
+        #                 'match_rules': {
+        #                     '1': ['data.compute.instance_id']
+        #                 },
+        #                 # 'replace_rules': {},
+        #                 "reference": {},
+        #                 'resource': result.to_primitive()
+        #             }
+        #
+        #             print("-----------------")
+        #             print(response)
+        #             print("-----------------")
+        #
+        #             yield response
 
-        # STEP 3
+        for _p in mp_params:
+            results = self.collector_manager.list_resources(_p)
 
+            for result in results:
+                response = {
+                    'state': 'SUCCESS',
+                    'resource_type': 'inventory.Server',
+                    'match_rules': {
+                        '1': ['data.compute.instance_id']
+                    },
+                    # 'replace_rules': {},
+                    "reference": {},
+                    'resource': result.to_primitive()
+                }
 
-        # 취합 후 return
+                # print("-----------------")
+                # print(response)
+                # print("-----------------")
 
-        return manager.list_resources(options, secret_data, filters)
+                yield response
 
+        print(f'############## TOTAL FINISHED {time.time() - start_time} Sec ##################')
 
+    def set_params_for_regions(self, params):
+        params_for_regions = []
 
+        (query, instance_ids, region_name) = self._check_query(params['filter'])
+        query.append({'Name': 'instance-state-name', 'Values': ['running', 'shutting-down', 'stopping', 'stopped']})
 
+        target_regions = self.get_all_regions(params['secret_data'], region_name)
 
+        for target_region in target_regions:
+            params_for_regions.append({
+                'region_name': target_region,
+                'query': query,
+                'secret_data': params['secret_data'],
+                'instance_ids': instance_ids
+            })
+
+        return params_for_regions
+
+    def _check_query(self, query):
+        instance_ids = []
+        filters = []
+        region_name = []
+        for key, value in query.items():
+            if key == 'instance_id' and isinstance(value, list):
+                instance_ids = value
+
+            elif key == 'region_name' and isinstance(value, list):
+                region_name.extend(value)
+
+            else:
+                if isinstance(value, list) == False:
+                    value = [value]
+
+                if len(value) > 0:
+                    filters.append({'Name': key, 'Values': value})
+
+        return (filters, instance_ids, region_name)
+
+    def get_all_regions(self, secret_data, region_name):
+        """ Find all region name
+        Args:
+            secret_data: secret data
+            region_name (list): list of region_name if wanted
+
+        Returns: list of region name
+        """
+
+        if 'region_name' in secret_data:
+            return [secret_data['region_name']]
+
+        if len(region_name) > 0:
+            return region_name
+
+        regions = self.collector_manager.list_regions(secret_data, DEFAULT_REGION)
+        return [region.get('RegionName') for region in regions if region.get('RegionName') is not None]

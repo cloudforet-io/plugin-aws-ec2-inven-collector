@@ -8,4 +8,6 @@ class LoadBalancer(Model):
     port = ListType(IntType())
     name = StringType()
     protocol = ListType(StringType())
-    tags = DictType(StringType)
+    scheme = StringType(choices=('internet-facing', 'internal'))
+    arn = StringType()
+    tags = DictType(StringType, default={})

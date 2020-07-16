@@ -3,13 +3,13 @@ from schematics.types import ModelType, StringType, BooleanType, ListType
 
 
 class Tags(Model):
-    key = StringType(deserialize_from="Key")
-    value = StringType(deserialize_from="Value")
+    Key = StringType()
+    Value = StringType()
 
 
 class AWSIAMInstanceProfile(Model):
-    id = StringType()
-    arn = StringType()
+    id = StringType(deserialize_from='Id')
+    arn = StringType(deserialize_from='Arn')
 
 
 class AWS(Model):

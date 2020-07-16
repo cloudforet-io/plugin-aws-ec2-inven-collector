@@ -10,4 +10,5 @@ class NIC(Model):
     cidr = StringType()
     mac_address = StringType()
     public_ip_address = StringType()
-    tags = DictType(StringType)
+    public_dns = StringType()
+    tags = DictType(StringType, default={})

@@ -1,4 +1,3 @@
-from spaceone.inventory.model.server import Server, ServerData
 from spaceone.inventory.model.auto_scaling_group import AutoScalingGroup
 from spaceone.inventory.model.aws import AWS
 from spaceone.inventory.model.compute import Compute
@@ -10,7 +9,9 @@ from spaceone.inventory.model.os import OS
 from spaceone.inventory.model.security_group_rule import SecurityGroupRule
 from spaceone.inventory.model.subnet import Subnet
 from spaceone.inventory.model.vpc import VPC
-# METADATA
-from spaceone.inventory.model.metadata import *
-from spaceone.inventory.model.metadata_dynamic_field import *
 
+# METADATA
+from spaceone.inventory.model.metadata.metadata import *
+from spaceone.inventory.model.metadata.metadata_dynamic_field import *
+
+from spaceone.inventory.model.server import Server, ServerData

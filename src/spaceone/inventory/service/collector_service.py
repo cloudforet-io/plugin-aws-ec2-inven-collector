@@ -87,12 +87,13 @@ class CollectorService(BaseService):
              ERROR_VERIFY_FAILED:
         """
         manager = self.locator.get_manager('CollectorManager')
-        options = params['options']
         secret_data = params['secret_data']
-        active = manager.verify(options, secret_data)
+        region_name = params.get('region_name', DEFAULT_REGION)
+        active = manager.verify(secret_data, region_name)
+
         _LOGGER.debug(active)
         capability = {
-            'filter_format':FILTER_FORMAT,
+            'filter_format': FILTER_FORMAT,
             'supported_resource_type' : SUPPORTED_RESOURCE_TYPE
             }
         return {'options': capability}

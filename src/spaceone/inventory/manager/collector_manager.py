@@ -20,13 +20,11 @@ class CollectorManager(BaseManager):
     ###################
     # Verify
     ###################
-    def verify(self, options, secret_data):
-
+    def verify(self, secret_data, region_name):
         """ Check connection
         """
-
-        connector = self.locator.get_connector('EC2Connector')
-        r = connector.verify(options, secret_data)
+        ec2_connector = self.locator.get_connector('EC2Connector')
+        r = ec2_connector.verify(secret_data, region_name)
         # ACTIVE/UNKNOWN
         return r
 

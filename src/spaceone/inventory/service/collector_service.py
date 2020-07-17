@@ -65,6 +65,7 @@ FILTER_FORMAT = [
 SUPPORTED_RESOURCE_TYPE = ['SERVER']
 NUMBER_OF_CONCURRENT = 20
 
+
 @authentication_handler
 class CollectorService(BaseService):
     def __init__(self, metadata):
@@ -100,7 +101,6 @@ class CollectorService(BaseService):
     @check_required(['options','secret_data', 'filter'])
     def list_resources(self, params):
         """ Get quick list of resources
-
         Args:
             params:
                 - options
@@ -111,74 +111,27 @@ class CollectorService(BaseService):
         """
 
         start_time = time.time()
-
-        # STEP 1
-        # parameter setting
+        # parameter setting for multi threading
         mp_params = self.set_params_for_regions(params)
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=NUMBER_OF_CONCURRENT) as executor:
-            print("[ EXECUTOR START ]")
             future_executors = []
             for mp_param in mp_params:
                 future_executors.append(executor.submit(self.collector_manager.list_resources, mp_param))
 
             for future in concurrent.futures.as_completed(future_executors):
-                yield future.result()
-
-        # STEP 2
-        # Multi processing
-        # with Pool(NUMBER_OF_CONCURRENT) as pool:
-        #     pool_results = pool.map(self.collector_manager.list_resources, mp_params)
-        #
-        #     for pool_result in pool_results:
-        #         for result in pool_result:
-        #             response = {
-        #                 'state': 'SUCCESS',
-        #                 'resource_type': 'inventory.Server',
-        #                 'match_rules': {
-        #                     '1': ['data.compute.instance_id']
-        #                 },
-        #                 # 'replace_rules': {},
-        #                 "reference": {},
-        #                 'resource': result.to_primitive()
-        #             }
-        #
-        #             print("-----------------")
-        #             print(response)
-        #             print("-----------------")
-        #
-        #             yield response
-
-        for _p in mp_params:
-            results = self.collector_manager.list_resources(_p)
-
-            for result in results:
-                response = {
-                    'state': 'SUCCESS',
-                    'resource_type': 'inventory.Server',
-                    'match_rules': {
-                        '1': ['data.compute.instance_id']
-                    },
-                    # 'replace_rules': {},
-                    "reference": {},
-                    'resource': result.to_primitive()
-                }
-
-                # print("-----------------")
-                # print(response)
-                # print("-----------------")
-
-                yield response
+                for result in future.result():
+                    yield result
 
         print(f'############## TOTAL FINISHED {time.time() - start_time} Sec ##################')
 
     def set_params_for_regions(self, params):
         params_for_regions = []
 
-        (query, instance_ids, region_name) = self._check_query(params['filter'])
+        (query, instance_ids, filter_region_name) = self._check_query(params['filter'])
         query.append({'Name': 'instance-state-name', 'Values': ['running', 'shutting-down', 'stopping', 'stopped']})
 
-        target_regions = self.get_all_regions(params['secret_data'], region_name)
+        target_regions = self.get_all_regions(params['secret_data'], filter_region_name)
 
         for target_region in target_regions:
             params_for_regions.append({
@@ -191,6 +144,17 @@ class CollectorService(BaseService):
         return params_for_regions
 
     def _check_query(self, query):
+        """
+        Args:
+            query (dict): example
+                  {
+                      'instance_id': ['i-123', 'i-2222', ...]
+                      'instance_type': 'm4.xlarge',
+                      'region_name': ['aaaa']
+                  }
+        If there is regiona_name in query, this indicates searching only these regions
+        """
+
         instance_ids = []
         filters = []
         region_name = []
@@ -210,7 +174,7 @@ class CollectorService(BaseService):
 
         return (filters, instance_ids, region_name)
 
-    def get_all_regions(self, secret_data, region_name):
+    def get_all_regions(self, secret_data, filter_region_name):
         """ Find all region name
         Args:
             secret_data: secret data
@@ -222,8 +186,8 @@ class CollectorService(BaseService):
         if 'region_name' in secret_data:
             return [secret_data['region_name']]
 
-        if len(region_name) > 0:
-            return region_name
+        if len(filter_region_name) > 0:
+            return filter_region_name
 
         regions = self.collector_manager.list_regions(secret_data, DEFAULT_REGION)
         return [region.get('RegionName') for region in regions if region.get('RegionName') is not None]

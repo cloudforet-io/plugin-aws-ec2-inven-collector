@@ -1,6 +1,6 @@
 from spaceone.core.manager import BaseManager
 from spaceone.inventory.model.load_balancer import LoadBalancer
-from spaceone.inventory.connector.ec2_connector_new import EC2Connector
+from spaceone.inventory.connector.ec2_connector import EC2Connector
 
 
 class LoadBalancerManager(BaseManager):
@@ -63,7 +63,6 @@ class LoadBalancerManager(BaseManager):
         for target_group in target_groups:
             target_group_arn = target_group.get('TargetGroupArn')
             target_type = target_group.get('TargetType')                                # instance | ip | lambda
-            # target_healths = self.ec2_connector.list_target_health(target_group_arn)
 
             for th in target_group.get('target_healths'):
                 target = th.get('Target', {})

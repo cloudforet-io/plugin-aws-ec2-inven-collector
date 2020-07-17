@@ -36,17 +36,19 @@ class CollectorManager(BaseManager):
 
         return ec2_connector.list_regions()
 
-    def list_resources(self, params):
-        print(f"=============== COLLECT :  {params['region_name']} ===============")
-        start_time = time.time()
-        resources = []
+    def list_instances(self, params):
+        server_vos = []
         ec2_connector: EC2Connector = self.locator.get_connector('EC2Connector')
         ec2_connector.set_client(params['secret_data'], params['region_name'])
 
-        # 1. Instance list
-        instances, account_id = ec2_connector.list_instances()
+        instance_filter = {}
+        # Instance list and account ID
+        if 'instance_ids' in params and len(params['instance_ids']) > 0:
+            instance_filter.update({'Filters': [{'Name': 'instance-id', 'Values': params['instance_ids']}]})
 
-        print(f'INSTANCE COUNT : {len(instances)}')
+        instances, account_id = ec2_connector.list_instances(**instance_filter)
+
+        print(f'===== [{params["region_name"]}]  /  INSTANCE COUNT : {len(instances)}')
 
         if len(instances) > 0:
             # Instance Type
@@ -80,11 +82,11 @@ class CollectorManager(BaseManager):
             # Security Group
             sgs = ec2_connector.list_security_groups()
 
-            ins_manager: EC2InstanceManager = EC2InstanceManager(params, ec2_connector=ec2_connector)
+            ins_manager: EC2InstanceManager = EC2InstanceManager(params)
             asg_manager: AutoScalingGroupManager = AutoScalingGroupManager(params)
-            elb_manager: LoadBalancerManager = LoadBalancerManager(params, ec2_connector)
+            elb_manager: LoadBalancerManager = LoadBalancerManager(params, ec2_connector=ec2_connector)
             disk_manager: DiskManager = DiskManager(params)
-            nic_manager: NICManager = NICManager(params, ec2_connector)
+            nic_manager: NICManager = NICManager(params)
             vpc_manager: VPCManager = VPCManager(params)
             sg_manager: SecurityGroupRuleManager = SecurityGroupRuleManager(params)
             meta_manager: MetadataManager = MetadataManager()
@@ -106,7 +108,8 @@ class CollectorManager(BaseManager):
 
                 nic_vos = nic_manager.get_nic_info(instance.get('NetworkInterfaces'), subnet_vo)
 
-                sg_ids = [security_group.get('GroupId') for security_group in instance.get('SecurityGroups', []) if security_group.get('GroupId') is not None]
+                sg_ids = [security_group.get('GroupId') for security_group in instance.get('SecurityGroups', []) if
+                          security_group.get('GroupId') is not None]
                 sg_rules_vos = sg_manager.get_security_group_rules_info(sg_ids, sgs)
 
                 server_data.update({
@@ -133,10 +136,21 @@ class CollectorManager(BaseManager):
                     '_metadata': meta_manager.get_metadata(),
                 })
 
-                resources.append(Server(server_data, strict=False))
+                server_vos.append(Server(server_data, strict=False))
 
-        print(f'   [{params["region_name"]}] Finished {time.time() - start_time} Seconds')
-        return resources
+        return server_vos
+
+    def list_resources(self, params):
+        start_time = time.time()
+
+        try:
+            resources = self.list_instances(params)
+            print(f'   [{params["region_name"]}] Finished {time.time() - start_time} Seconds')
+            return resources
+
+        except Exception as e:
+            print(f'[ERROR: {params["region_name"]}] : {e}')
+            return []
 
     def get_volume_ids(self, instance):
         block_device_mappings = instance.get('BlockDeviceMappings', [])

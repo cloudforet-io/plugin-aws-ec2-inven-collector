@@ -11,6 +11,7 @@ _LOGGER = logging.getLogger(__name__)
 DEFAULT_REGION = 'us-east-1'
 PAGINATOR_MAX_ITEMS = 10000
 PAGINATOR_PAGE_SIZE = 50
+RESOURCES = ['cloudformation', 'cloudwatch', 'dynamodb', 'ec2', 'glacier', 'iam', 'opsworks', 's3', 'sns', 'sqs']
 
 class EC2Connector(BaseConnector):
 
@@ -19,6 +20,24 @@ class EC2Connector(BaseConnector):
         self.ec2_client = None
         self.asg_client = None
         self.elbv2_client = None
+
+    def verify(self, secret_data, region_name):
+        self.set_connect(secret_data, region_name)
+        return "ACTIVE"
+
+    def set_connect(self, secret_data, region_name, service="ec2"):
+        session = self.get_session(secret_data, region_name)
+        aws_conf = {}
+        aws_conf['region_name'] = region_name
+
+        if service in RESOURCES:
+            resource = session.resource(service, **aws_conf)
+            client = resource.meta.client
+        else:
+            resource = None
+            client = session.client(service, region_name=region_name)
+        return client, resource
+
 
     def get_session(self, secret_data, region_name):
         params = {

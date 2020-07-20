@@ -101,12 +101,7 @@ class CollectorService(BaseService):
         region_name = params.get('region_name', DEFAULT_REGION)
         active = manager.verify(secret_data, region_name)
 
-        _LOGGER.debug(active)
-        capability = {
-            'filter_format': FILTER_FORMAT,
-            'supported_resource_type': SUPPORTED_RESOURCE_TYPE
-        }
-        return {'options': capability}
+        return {}
 
     @transaction
     @check_required(['options','secret_data', 'filter'])

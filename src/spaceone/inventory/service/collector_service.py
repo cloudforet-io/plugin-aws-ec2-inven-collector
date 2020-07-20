@@ -66,12 +66,23 @@ FILTER_FORMAT = [
 ]
 
 
-SUPPORTED_RESOURCE_TYPE = ['SERVER']
+SUPPORTED_RESOURCE_TYPE = ['inventory.Server']
 
 @authentication_handler
 class CollectorService(BaseService):
     def __init__(self, metadata):
         super().__init__(metadata)
+
+    @transaction
+    @check_required(['options'])
+    def init(self, params):
+        """ init plugin by options
+        """
+        capability = {
+            'filter_format':FILTER_FORMAT,
+            'supported_resource_type' : SUPPORTED_RESOURCE_TYPE
+            }
+        return {'metadata': capability}
 
     @transaction
     @check_required(['options','secret_data'])

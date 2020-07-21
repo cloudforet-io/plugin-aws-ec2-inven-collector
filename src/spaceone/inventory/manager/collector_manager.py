@@ -17,9 +17,6 @@ class CollectorManager(BaseManager):
     def __init__(self, transaction):
         super().__init__(transaction)
 
-    ###################
-    # Verify
-    ###################
     def verify(self, secret_data, region_name):
         """ Check connection
         """

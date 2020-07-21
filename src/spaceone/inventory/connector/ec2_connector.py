@@ -164,7 +164,6 @@ class EC2Connector(BaseConnector):
         response = self.elbv2_client.describe_target_health(TargetGroupArn=target_group_arn, **query)
         return response.get('TargetHealthDescriptions', [])
 
-
     def list_security_groups(self, **query):
         security_groups = []
         query = self._generate_query(is_paginate=True, **query)

@@ -38,7 +38,6 @@ class EC2Connector(BaseConnector):
             client = session.client(service, region_name=region_name)
         return client, resource
 
-
     def get_session(self, secret_data, region_name):
         params = {
             'aws_access_key_id': secret_data['aws_access_key_id'],

@@ -11,15 +11,16 @@ class NICManager(BaseManager):
     def get_nic_info(self, network_interfaces, subnet_vo):
         '''
         nic_data = {
-            "ip_addresses": [],
             "device_index": 0,
             "device": "",
             "nic_type": "",
+            "ip_addresses": [],
             "cidr": "",
             "mac_address": "",
             "public_ip_address": "",
-            "public_dns": "",
-            "tags": {}
+            "tags": {
+                "public_dns": "",
+            }
         }
         '''
 
@@ -32,7 +33,9 @@ class NICManager(BaseManager):
                 'cidr': subnet_vo.cidr,
                 'mac_address': net_inf.get('MacAddress'),
                 'public_ip_address': net_inf.get('Association', {}).get('PublicIp', ''),
-                'public_dns': net_inf.get('Association', {}).get('PublicDnsName', ''),
+                'tags': {
+                    'public_dns': net_inf.get('Association', {}).get('PublicDnsName', '')
+                }
             }
 
             if 'Attachment' in net_inf and 'DeviceIndex' in net_inf.get('Attachment'):

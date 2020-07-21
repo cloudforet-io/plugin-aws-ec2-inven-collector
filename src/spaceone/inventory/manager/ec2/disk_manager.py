@@ -11,15 +11,16 @@ class DiskManager(BaseManager):
     def get_disk_info(self, volume_ids, volumes):
         '''
         disk_data = {
-            "volume_id": "",
-            "disk_type": "EBS",
-            "volume_type": ""
             "device_index": 0,
             "device": "",
-            "iops": 0,
-            "encrypted": true | false
+            "disk_type": "EBS",
             "size": 100,
-            "tags": {}
+            "tags": {
+                "volume_id": "",
+                "volume_type": ""
+                "iops": 0,
+                "encrypted": true | false
+            }
         }
         '''
         disks = []
@@ -28,16 +29,18 @@ class DiskManager(BaseManager):
         index = 0
         for match_volume in match_volumes:
             volume_data = {
-                'volume_id': match_volume.get('VolumeId'),
-                'volume_type': match_volume.get('VolumeType'),
                 'device_index': index,
                 'device': self.get_device(match_volume),
-                'encrypted': match_volume.get('Encrypted'),
                 'size': match_volume.get('Size'),
+                'tags': {
+                    'volume_id': match_volume.get('VolumeId'),
+                    'volume_type': match_volume.get('VolumeType'),
+                    'encrypted': match_volume.get('Encrypted'),
+                }
             }
 
             if 'iops' in match_volume:
-                volume_data.update({
+                volume_data['tags'].update({
                     'iops': match_volume.get('iops')
                 })
 

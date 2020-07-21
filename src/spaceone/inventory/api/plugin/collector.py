@@ -28,7 +28,7 @@ class Collector(BaseAPI, collector_pb2_grpc.CollectorServicer):
 
     def collect(self, request, context):
         params, metadata = self.parse_request(request, context)
-
+    # 111
         with self.locator.get_service('CollectorService', metadata) as collector_svc:
             for resource in collector_svc.list_resources(params):
                 res = {

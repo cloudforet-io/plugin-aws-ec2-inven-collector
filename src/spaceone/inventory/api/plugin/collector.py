@@ -12,7 +12,7 @@ class Collector(BaseAPI, collector_pb2_grpc.CollectorServicer):
 
     pb2 = collector_pb2
     pb2_grpc = collector_pb2_grpc
-    # asdf
+
     def init(self, request, context):
         params, metadata = self.parse_request(request, context)
 
@@ -22,14 +22,14 @@ class Collector(BaseAPI, collector_pb2_grpc.CollectorServicer):
 
     def verify(self, request, context):
         params, metadata = self.parse_request(request, context)
-    # ddd
+
         with self.locator.get_service('CollectorService', metadata) as collector_svc:
             collector_svc.verify(params)
             return self.locator.get_info('EmptyInfo')
 
     def collect(self, request, context):
         params, metadata = self.parse_request(request, context)
-    # 111
+
         with self.locator.get_service('CollectorService', metadata) as collector_svc:
             for resource in collector_svc.list_resources(params):
                 res = {

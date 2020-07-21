@@ -12,7 +12,7 @@ class Collector(BaseAPI, collector_pb2_grpc.CollectorServicer):
 
     pb2 = collector_pb2
     pb2_grpc = collector_pb2_grpc
-
+    # asdf
     def init(self, request, context):
         params, metadata = self.parse_request(request, context)
 

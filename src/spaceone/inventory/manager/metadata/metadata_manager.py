@@ -18,13 +18,16 @@ ec2_instance = ItemDynamicLayout.set_fields('EC2 Instance', fields=[
         'indigo.500': ['spot'], 'coral.600': ['scheduled']
     }),
     TextDyField.data_source('Key Pair', 'data.compute.keypair'),
-    TextDyField.data_source('IAM Role', 'data.aws.iam_instance_profile.name'),
+    TextDyField.data_source('IAM Role ARN', 'data.aws.iam_instance_profile.arn'),
     EnumDyField.data_source('EBS-Optimized', 'data.aws.ebs_optimized', default_badge={
         'indigo.500': ['true'], 'coral.600': ['false']
     }),
     TextDyField.data_source('AMI ID', 'data.compute.image'),
     TextDyField.data_source('Region', 'data.compute.region_name'),
-    TextDyField.data_source('Availability Zone', 'data.compute.availablity_zone'),
+    TextDyField.data_source('Availability Zone', 'data.compute.az'),
+    EnumDyField.data_source('Termination Protection', 'data.compute.termination_protection', default_badge={
+        'indigo.500': ['true'], 'coral.600': ['false']
+    }),
     TextDyField.data_source('Public DNS', 'data.public_dns'),
     TextDyField.data_source('Public IP', 'data.public_ip_address'),
     ListDyField.data_source('Elastic IPs', 'data.compute.eip',
@@ -89,7 +92,7 @@ elb = TableDynamicLayout.set_fields('ELB', root_path='data.load_balancers', fiel
         'indigo.500': ['network'], 'coral.600': ['application']
     }),
     ListDyField.data_source('Protocol', 'protocol', options={'delimiter': '<br>'}),
-    TextDyField.data_source('Port', 'port'),
+    ListDyField.data_source('Port', 'port', options={'delimiter': '<br>'}),
     EnumDyField.data_source('Scheme', 'scheme', default_badge={
         'indigo.500': ['internet-facing'], 'coral.600': ['internal']
     }),

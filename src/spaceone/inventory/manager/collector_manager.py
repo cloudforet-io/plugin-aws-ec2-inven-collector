@@ -77,7 +77,7 @@ class CollectorManager(BaseManager):
             # Security Group
             sgs = ec2_connector.list_security_groups()
 
-            ins_manager: EC2InstanceManager = EC2InstanceManager(params)
+            ins_manager: EC2InstanceManager = EC2InstanceManager(params, ec2_connector=ec2_connector)
             asg_manager: AutoScalingGroupManager = AutoScalingGroupManager(params)
             elb_manager: LoadBalancerManager = LoadBalancerManager(params, ec2_connector=ec2_connector)
             disk_manager: DiskManager = DiskManager(params)

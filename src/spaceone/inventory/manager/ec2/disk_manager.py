@@ -28,6 +28,7 @@ class DiskManager(BaseManager):
 
         index = 0
         for match_volume in match_volumes:
+
             volume_data = {
                 'device_index': index,
                 'device': self.get_device(match_volume),
@@ -35,13 +36,13 @@ class DiskManager(BaseManager):
                 'tags': {
                     'volume_id': match_volume.get('VolumeId'),
                     'volume_type': match_volume.get('VolumeType'),
-                    'encrypted': match_volume.get('Encrypted'),
+                    'encrypted': match_volume.get('Encrypted')
                 }
             }
 
-            if 'iops' in match_volume:
+            if 'Iops' in match_volume:
                 volume_data['tags'].update({
-                    'iops': match_volume.get('iops')
+                    'iops': match_volume.get('Iops')
                 })
 
             disks.append(Disk(volume_data, strict=False))

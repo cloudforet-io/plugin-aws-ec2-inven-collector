@@ -40,6 +40,7 @@ class ServerData(Model):
 
 
 class Server(Model):
+    name = StringType()
     data = ModelType(ServerData)
     nics = ListType(ModelType(NIC))
     disks = ListType(ModelType(Disk))

@@ -53,11 +53,11 @@ ec2 = ListDynamicLayout.set_layouts('AWS EC2', layouts=[ec2_instance, ec2_vpc, e
 disk = TableDynamicLayout.set_fields('Disk', root_path='disks', fields=[
     TextDyField.data_source('Index', 'device_index'),
     TextDyField.data_source('Name', 'device'),
-    TextDyField.data_source('Volume ID', 'volume_id'),
-    EnumDyField.data_source('Volume Type', 'volume_type', default_outline_badge=['gp2', 'io1', 'sc1', 'st1', 'standard']),
-    TextDyField.data_source('IOPS', 'iops'),
     TextDyField.data_source('Size(GiB)', 'size'),
-    EnumDyField.data_source('Encrypted', 'encrypted', default_badge={
+    TextDyField.data_source('Volume ID', 'tags.volume_id'),
+    EnumDyField.data_source('Volume Type', 'tags.volume_type', default_outline_badge=['gp2', 'io1', 'sc1', 'st1', 'standard']),
+    TextDyField.data_source('IOPS', 'tags.iops'),
+    EnumDyField.data_source('Encrypted', 'tags.encrypted', default_badge={
         'indigo.500': ['true'], 'coral.600': ['false']
     }),
 ])
@@ -68,7 +68,7 @@ nic = TableDynamicLayout.set_fields('NIC', root_path='nics', fields=[
     ListDyField.data_source('IP Addresses', 'ip_addresses', options={'delimiter': '<br>'}),
     TextDyField.data_source('CIDR', 'cidr'),
     TextDyField.data_source('Public IP', 'public_ip_address'),
-    TextDyField.data_source('Public DNS', 'public_dns'),
+    TextDyField.data_source('Public DNS', 'tags.public_dns'),
 ])
 
 security_group = TableDynamicLayout.set_fields('Security Groups', root_path='data.security_group_rules', fields=[

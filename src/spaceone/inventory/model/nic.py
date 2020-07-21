@@ -1,5 +1,10 @@
 from schematics import Model
-from schematics.types import StringType, IntType, ListType, DictType
+from schematics.types import StringType, IntType, ListType, DictType, ModelType
+
+
+class NICTags(Model):
+    public_dns = StringType(serialize_when_none=False)
+
 
 class NIC(Model):
     device_index = IntType()
@@ -9,4 +14,4 @@ class NIC(Model):
     cidr = StringType()
     mac_address = StringType()
     public_ip_address = StringType()
-    tags = DictType(StringType, default={})
+    tags = ModelType(NICTags, default={})

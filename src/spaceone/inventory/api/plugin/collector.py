@@ -22,7 +22,7 @@ class Collector(BaseAPI, collector_pb2_grpc.CollectorServicer):
 
     def verify(self, request, context):
         params, metadata = self.parse_request(request, context)
-
+    # ddd
         with self.locator.get_service('CollectorService', metadata) as collector_svc:
             return self.locator.get_info('EmptyInfo')
 

@@ -3,18 +3,19 @@ from spaceone.inventory.model.compute import Compute
 from spaceone.inventory.model.aws import AWS
 from spaceone.inventory.model.os import OS
 from spaceone.inventory.model.hardware import Hardware
-
+from spaceone.inventory.connector.ec2_connector import EC2Connector
 
 class EC2InstanceManager(BaseManager):
 
     def __init__(self, params, ec2_connector=None):
         self.params = params
-        self.ec2_connector = ec2_connector
+        self.ec2_connector: EC2Connector = ec2_connector
 
     def get_server_info(self, instance, itypes, images, eips):
         '''
         server_data = {
             "os_type": "LINUX" | "WINDOWS"
+            "name": ''
             "ip_addresses": []
             "data":  {
                 "os": {
@@ -39,7 +40,7 @@ class EC2InstanceManager(BaseManager):
                 "compute": {
                     "eip": [],
                     "keypair": "",
-                    "availabiliity_zone": "",
+                    "availability_zone": "",
                     "instance_state": "",
                     "instance_type": "",
                     "launched_at": "datetime",
@@ -78,7 +79,8 @@ class EC2InstanceManager(BaseManager):
 
     def get_server_dic(self, instance):
         server_data = {
-            'os_type': self.get_os_type(instance),
+            'name': self.generate_name(instance),
+            'os_type': self.get_os_type(instance)
         }
 
         return server_data
@@ -118,8 +120,9 @@ class EC2InstanceManager(BaseManager):
         compute_data = {
             'eip': self.match_eips_from_instance_id(instance.get('InstanceId'), eips),
             'keypair': instance.get('KeyName', ''),
-            'availabiliity_zone': instance.get('Placement', {}).get('AvailabilityZone', ''),
+            'az': instance.get('Placement', {}).get('AvailabilityZone', ''),
             'instance_state': instance.get('State', {}).get('Name'),
+            'termination_protection': self.get_termination_protection(instance.get('InstanceId')),
             'instance_type': instance.get('InstanceType', ''),
             'launched_at': instance.get('LaunchTime'),
             'region_name': self.params['region_name'],
@@ -131,6 +134,9 @@ class EC2InstanceManager(BaseManager):
         }
 
         return Compute(compute_data)
+
+    def get_termination_protection(self, instance_id):
+        return self.ec2_connector.list_instance_attribute(instance_id)
 
     def get_os_distro(self, image_name, os_type):
         if image_name == '':
@@ -168,7 +174,6 @@ class EC2InstanceManager(BaseManager):
     @staticmethod
     def get_os_type(instance):
         return instance.get('Platform', 'LINUX').upper()
-
 
     @staticmethod
     def extract_os_distro(image_name, os_type):

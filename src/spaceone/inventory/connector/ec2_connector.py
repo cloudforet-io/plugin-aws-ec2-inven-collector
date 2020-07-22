@@ -100,6 +100,13 @@ class EC2Connector(BaseConnector):
 
         return instance_types
 
+    def list_instance_attribute(self, instance_id, **query):
+        response = self.ec2_client.describe_instance_attribute(Attribute='disableApiTermination',
+                                                                 InstanceId=instance_id, **query)
+
+        attribute = response.get('DisableApiTermination', {'Value': False})
+        return attribute.get('Value')
+
     def list_auto_scaling_groups(self, **query):
         auto_scaling_groups = []
         query = self._generate_query(is_paginate=True, **query)

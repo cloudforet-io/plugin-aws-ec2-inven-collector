@@ -34,7 +34,8 @@ setup(
         'spaceone-core',
         'spaceone-api',
         'spaceone-tester',
-        'boto3'
+        'boto3',
+        'schematics'
     ],
     zip_safe=False,
 )

@@ -24,6 +24,11 @@ export AWS_SECRET_ACCESS_KEY=<YOUR_AWS_SECRET_ACCESS_KEY>
 
 class TestCollector(TestCase):
 
+    def test_init(self):
+        v_info = self.inventory.Collector.init({'options': {}})
+        print_json(v_info)
+
+
     def test_verify(self):
         options = {
         }
@@ -31,18 +36,20 @@ class TestCollector(TestCase):
             'aws_access_key_id': AKI,
             'aws_secret_access_key': SAK
         }
-        v_info = self.inventory.Collector.verify({'options':options, 'secret_data':secret_data})
+        v_info = self.inventory.Collector.verify({'options': options, 'secret_data': secret_data})
         print_json(v_info)
 
     def test_collect(self):
         options = {}
         secret_data = {
             'aws_access_key_id': AKI,
-            'aws_secret_access_key': SAK
+            'aws_secret_access_key': SAK,
         }
         filter = {}
-        resource_stream = self.inventory.Collector.collect({'options':options, 'secret_data':secret_data, 'filter':filter})
-        print(resource_stream)
+
+        resource_stream = self.inventory.Collector.collect({'options': options, 'secret_data': secret_data,
+                                                            'filter': filter})
+        # print(resource_stream)
 
         for res in resource_stream:
             print_json(res)

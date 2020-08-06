@@ -31,13 +31,12 @@ class Collector(BaseAPI, collector_pb2_grpc.CollectorServicer):
         params, metadata = self.parse_request(request, context)
 
         with self.locator.get_service('CollectorService', metadata) as collector_svc:
-            for resource in collector_svc.list_resources(params):
+            for resource, resource_format in collector_svc.list_resources(params):
                 res = {
                     'state': 'SUCCESS',
                     'message': '',
-                    'resource_type': 'inventory.Server',
-                    'match_rules': change_struct_type({'1': ['data.compute.instance_id']}),
-                    # 'replace_rules': change_struct_type({}}),
+                    'resource_type': resource_format['resource_type'],
+                    'match_rules': change_struct_type(resource_format['match_rules']),
                     'resource': change_struct_type(resource.to_primitive())
                 }
 

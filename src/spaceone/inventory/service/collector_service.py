@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 import time
 import logging
-from spaceone.core.service import *
-from multiprocessing import Pool
 import concurrent.futures
+
+from spaceone.core.service import *
 from spaceone.inventory.manager.collector_manager import CollectorManager
 
 _LOGGER = logging.getLogger(__name__)
@@ -62,7 +62,7 @@ FILTER_FORMAT = [
     }
 ]
 
-SUPPORTED_RESOURCE_TYPE = ['inventory.Server']
+SUPPORTED_RESOURCE_TYPE = ['inventory.Server', 'inventory.Region']
 NUMBER_OF_CONCURRENT = 20
 
 
@@ -83,7 +83,18 @@ class CollectorService(BaseService):
         return {'metadata': capability}
 
     @transaction
-    @check_required(['options', 'secret_data'])
+    @check_required(['options'])
+    def init(self, params):
+        """ init plugin by options
+        """
+        capability = {
+            'filter_format':FILTER_FORMAT,
+            'supported_resource_type' : SUPPORTED_RESOURCE_TYPE
+            }
+        return {'metadata': capability}
+
+    @transaction
+    @check_required(['options','secret_data'])
     def verify(self, params):
         """ verify options capability
         Args:
@@ -119,6 +130,13 @@ class CollectorService(BaseService):
         start_time = time.time()
         # parameter setting for multi threading
         mp_params = self.set_params_for_regions(params)
+        resource_regions = []
+        collected_region_code = []
+
+        server_resource_format = {'resource_type': 'inventory.Server',
+                                  'match_rules': {'1': ['data.compute.instance_id']}}
+        region_resource_format = {'resource_type': 'inventory.Region',
+                                  'match_rules': {'1': ['region_code', 'region_type']}}
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=NUMBER_OF_CONCURRENT) as executor:
             future_executors = []
@@ -127,7 +145,16 @@ class CollectorService(BaseService):
 
             for future in concurrent.futures.as_completed(future_executors):
                 for result in future.result():
-                    yield result
+                    collected_region = self.collector_manager.get_region_from_result(result)
+
+                    if collected_region is not None and collected_region.region_code not in collected_region_code:
+                        resource_regions.append(collected_region)
+                        collected_region_code.append(collected_region.region_code)
+
+                    yield result, server_resource_format
+
+        for resource_region in resource_regions:
+            yield resource_region, region_resource_format
 
         print(f'############## TOTAL FINISHED {time.time() - start_time} Sec ##################')
 

@@ -260,7 +260,7 @@ class EC2Connector(BaseConnector):
     def _generate_query(is_paginate=False, **query):
         if is_paginate:
             query.update({
-                'PaginationConfig':{
+                'PaginationConfig': {
                     'MaxItems': PAGINATOR_MAX_ITEMS,
                     'PageSize': PAGINATOR_PAGE_SIZE,
                 }

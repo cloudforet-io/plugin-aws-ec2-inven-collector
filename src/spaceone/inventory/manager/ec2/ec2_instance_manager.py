@@ -117,6 +117,7 @@ class EC2InstanceManager(BaseManager):
         return Hardware(hardware_data, strict=False)
 
     def get_compute_data(self, instance, image, eips):
+
         compute_data = {
             'eip': self.match_eips_from_instance_id(instance.get('InstanceId'), eips),
             'keypair': instance.get('KeyName', ''),

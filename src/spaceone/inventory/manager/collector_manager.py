@@ -38,9 +38,8 @@ class CollectorManager(BaseManager):
         ec2_connector: EC2Connector = self.locator.get_connector('EC2Connector')
         ec2_connector.set_client(params['secret_data'], params['region_name'])
 
-        instance_filter = {
+        instance_filter = {}
 
-        }
         # Instance list and account ID
         if 'instance_ids' in params and len(params['instance_ids']) > 0:
             instance_filter.update({'Filters': [{'Name': 'instance-id', 'Values': params['instance_ids']}]})

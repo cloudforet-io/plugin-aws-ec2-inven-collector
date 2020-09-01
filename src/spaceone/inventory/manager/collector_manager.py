@@ -113,6 +113,8 @@ class CollectorManager(BaseManager):
                 server_data.update({
                     'nics': nic_vos,
                     'disks': disk_vos,
+                    'region_code': params.get("region_name", ''),
+                    'region_type': 'AWS'
                 })
 
                 server_data['data'].update({

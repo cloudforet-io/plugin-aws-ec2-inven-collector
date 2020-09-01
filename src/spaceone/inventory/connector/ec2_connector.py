@@ -267,4 +267,3 @@ class EC2Connector(BaseConnector):
             })
 
         return query
-      

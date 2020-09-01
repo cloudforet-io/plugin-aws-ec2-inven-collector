@@ -1,3 +1,5 @@
 PROTO = {
-    'spaceone.inventory.api.plugin.collector': ['Collector']
+    'plugin': {
+        'collector': ['Collector']
+    }
 }

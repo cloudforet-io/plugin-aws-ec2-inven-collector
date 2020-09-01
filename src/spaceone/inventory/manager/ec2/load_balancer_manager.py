@@ -48,12 +48,15 @@ class LoadBalancerManager(BaseManager):
         return load_balancer_data_list
 
     def get_load_balancers_from_instance_id(self, instance_id, instance_ip, load_balancers, target_groups):
+        matched_lb_arns = []
         match_load_balancers = []
         match_target_groups = self.match_target_groups(target_groups, instance_id, instance_ip)
 
         for match_tg in match_target_groups:
             for lb in self.match_load_balancers(load_balancers, match_tg.get('LoadBalancerArns', [])):
-                match_load_balancers.append(lb)
+                if lb.get('LoadBalancerArn') not in matched_lb_arns:
+                    match_load_balancers.append(lb)
+                    matched_lb_arns.append(lb.get('LoadBalancerArn'))
 
         return match_load_balancers
 

@@ -78,8 +78,13 @@ class EC2Connector(BaseConnector):
     def list_instances(self, **query):
         ec2_instances = []
         query = self._generate_query(is_paginate=True, **query)
+        query.update({'Filters':
+                      [
+                        {'Name': 'instance-state-name',
+                         'Values': ['running', 'shutting-down', 'stopping', 'stopped']
+                         }
+                      ]})
         paginator = self.ec2_client.get_paginator('describe_instances')
-
         response_iterator = paginator.paginate(**query)
         account_id = ''
         for data in response_iterator:

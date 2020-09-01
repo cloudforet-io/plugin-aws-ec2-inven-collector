@@ -71,7 +71,7 @@ class LoadBalancerManager(BaseManager):
                 target = th.get('Target', {})
                 target_id = target.get('Id')
 
-                if target_id is not None:
+                if target_id is not None and target_id not in match_target_groups:
                     if target_type == 'instance' and instance_id == target_id:
                         match_target_groups.append(target_group)
                     elif target_type == 'ip' and instance_ip == target_id:

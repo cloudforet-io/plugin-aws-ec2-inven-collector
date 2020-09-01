@@ -15,7 +15,7 @@ RESOURCES = ['cloudformation', 'cloudwatch', 'dynamodb', 'ec2', 'glacier', 'iam'
 
 class EC2Connector(BaseConnector):
 
-    def __init__(self, transaction=None, conf=None):
+    def __init__(self, transaction=None, config=None):
         self.session = None
         self.ec2_client = None
         self.asg_client = None

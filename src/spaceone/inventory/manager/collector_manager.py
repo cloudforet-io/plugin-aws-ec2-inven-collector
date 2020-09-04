@@ -5,7 +5,7 @@ import logging
 from spaceone.core.manager import BaseManager
 from spaceone.inventory.connector import EC2Connector
 from spaceone.inventory.manager.ec2 import EC2InstanceManager, AutoScalingGroupManager, LoadBalancerManager, \
-    DiskManager, NICManager, VPCManager, SecurityGroupRuleManager
+    DiskManager, NICManager, VPCManager, SecurityGroupManager
 from spaceone.inventory.manager.metadata.metadata_manager import MetadataManager
 from spaceone.inventory.model.server import Server
 from spaceone.inventory.model.region import Region
@@ -85,14 +85,14 @@ class CollectorManager(BaseManager):
             disk_manager: DiskManager = DiskManager(params)
             nic_manager: NICManager = NICManager(params)
             vpc_manager: VPCManager = VPCManager(params)
-            sg_manager: SecurityGroupRuleManager = SecurityGroupRuleManager(params)
+            sg_manager: SecurityGroupManager = SecurityGroupManager(params)
             meta_manager: MetadataManager = MetadataManager()
 
             for instance in instances:
                 instance_id = instance.get('InstanceId')
                 instance_ip = instance.get('PrivateIpAddress')
 
-                server_data = ins_manager.get_server_info(instance, itypes, images, eips)
+                server_data = ins_manager.get_server_info(instance, itypes, images) # , eips
                 auto_scaling_group_vo = asg_manager.get_auto_scaling_info(instance_id, auto_scaling_groups,
                                                                           launch_configurations)
 
@@ -107,7 +107,7 @@ class CollectorManager(BaseManager):
 
                 sg_ids = [security_group.get('GroupId') for security_group in instance.get('SecurityGroups', []) if
                           security_group.get('GroupId') is not None]
-                sg_rules_vos = sg_manager.get_security_group_rules_info(sg_ids, sgs)
+                sg_rules_vos = sg_manager.get_security_group_info(sg_ids, sgs)
 
                 server_data.update({
                     'nics': nic_vos,
@@ -115,8 +115,8 @@ class CollectorManager(BaseManager):
                 })
 
                 server_data['data'].update({
-                    'load_balancers': load_balancer_vos,
-                    'security_group_rules': sg_rules_vos,
+                    'load_balancer': load_balancer_vos,
+                    'security_group': sg_rules_vos,
                     'auto_scaling_group': auto_scaling_group_vo,
                     'vpc': vpc_vo,
                     'subnet': subnet_vo,
@@ -124,10 +124,11 @@ class CollectorManager(BaseManager):
 
                 # IP addr : ip_addresses = data.compute.eip + nics.ip_addresses + data.public_ip_address
                 server_data.update({
-                    'ip_addresses': self.merge_ip_addresses(server_data)
+                    'ip_addresses': self.merge_ip_addresses(server_data),
+                    'primary_ip_address': instance_ip
                 })
 
-                server_data['data']['compute']['account_id'] = account_id
+                server_data['data']['compute']['account'] = account_id
 
                 server_data.update({
                     '_metadata': meta_manager.get_metadata(),
@@ -164,10 +165,7 @@ class CollectorManager(BaseManager):
         for nic in nics:
             nic_ip_addresses.extend(nic.ip_addresses)
 
-        merge_ip_address = compute_data.eip + nic_ip_addresses
-
-        if server_data['data']['public_ip_address'] != '':
-            merge_ip_address.append(server_data['data']['public_ip_address'])
+        merge_ip_address = nic_ip_addresses
 
         return list(set(merge_ip_address))
 

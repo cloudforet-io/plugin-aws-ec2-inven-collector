@@ -23,16 +23,16 @@ ec2_instance = ItemDynamicLayout.set_fields('EC2 Instance', fields=[
         'indigo.500': ['true'], 'coral.600': ['false']
     }),
     TextDyField.data_source('AMI ID', 'data.compute.image'),
-    TextDyField.data_source('Region', 'data.compute.region_name'),
+    TextDyField.data_source('Region', 'region_code'),
     TextDyField.data_source('Availability Zone', 'data.compute.az'),
-    EnumDyField.data_source('Termination Protection', 'data.compute.termination_protection', default_badge={
-        'indigo.500': ['true'], 'coral.600': ['false']
-    }),
-    TextDyField.data_source('Public DNS', 'data.public_dns'),
-    TextDyField.data_source('Public IP', 'data.public_ip_address'),
-    ListDyField.data_source('Elastic IPs', 'data.compute.eip',
-                            default_badge={'type': 'outline', 'delimiter': '<br>'}),
-    ListDyField.data_source('Security Groups', 'data.compute.security_groups',
+    # EnumDyField.data_source('Termination Protection', 'data.compute.termination_protection', default_badge={
+    #     'indigo.500': ['true'], 'coral.600': ['false']
+    # }),
+    # TextDyField.data_source('Public DNS', 'data.public_dns'),
+    # TextDyField.data_source('Public IP', 'data.public_ip_address'),
+    # ListDyField.data_source('Elastic IPs', 'data.compute.eip',
+    #                         default_badge={'type': 'outline', 'delimiter': '<br>'}),
+    ListDyField.data_source('Security Groups', 'data.compute.security_groups.display',
                             default_badge={'type': 'outline', 'delimiter': '<br>'}),
     TextDyField.data_source('Account ID', 'data.compute.account_id'),
     DateTimeDyField.data_source('Launched At', 'data.compute.launched_at'),
@@ -71,7 +71,7 @@ nic = TableDynamicLayout.set_fields('NIC', root_path='nics', fields=[
     ListDyField.data_source('IP Addresses', 'ip_addresses', options={'delimiter': '<br>'}),
     TextDyField.data_source('CIDR', 'cidr'),
     TextDyField.data_source('Public IP', 'public_ip_address'),
-    TextDyField.data_source('Public DNS', 'tags.public_dns'),
+    TextDyField.data_source('Public DNS', 'tags.public_dns')
 ])
 
 security_group = TableDynamicLayout.set_fields('Security Groups', root_path='data.security_group_rules', fields=[

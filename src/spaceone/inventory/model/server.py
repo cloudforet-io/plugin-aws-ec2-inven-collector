@@ -1,6 +1,6 @@
 from schematics import Model
 from schematics.types import serializable, ModelType, ListType, StringType
-from spaceone.inventory.model import OS, AWS, Hardware, SecurityGroupRule, Compute, LoadBalancer, VPC, Subnet, \
+from spaceone.inventory.model import OS, AWS, Hardware, SecurityGroup, Compute, LoadBalancer, VPC, Subnet, \
     AutoScalingGroup, NIC, Disk, ServerMetadata
 
 
@@ -16,14 +16,16 @@ class ServerData(Model):
     os = ModelType(OS)
     aws = ModelType(AWS)
     hardware = ModelType(Hardware)
-    security_group_rules = ListType(ModelType(SecurityGroupRule))
-    public_ip_address = StringType()
+    security_group = ListType(ModelType(SecurityGroup))
+    # public_ip_address = StringType()
     compute = ModelType(Compute)
-    public_dns = StringType()
-    load_balancers = ListType(ModelType(LoadBalancer))
+    # public_dns = StringType()
+    load_balancer = ListType(ModelType(LoadBalancer))
     vpc = ModelType(VPC)
     subnet = ModelType(Subnet)
-    auto_scaling_group = ModelType(AutoScalingGroup, serialize_when_none=False)
+    auto_scaling_group = ModelType(AutoScalingGroup)
+    # cloudwatch = ModelType(CloudWatch)
+    # domain = ModelType(Domain)
 
     @serializable
     def cloudwatch(self):
@@ -49,7 +51,11 @@ class Server(Model):
     os_type = StringType(choices=('LINUX', 'WINDOWS'))
     provider = StringType(default='aws')
     _metadata = ModelType(ServerMetadata, serialized_name='metadata')
-    # reference = ModelType(ReferenceModel)
+    # NEW
+    reference = ModelType(ReferenceModel)
+    primary_ip_address = StringType(default='')
+    region_code = StringType()
+    region_type = StringType(default='AWS')
 
     @serializable
     def reference(self):

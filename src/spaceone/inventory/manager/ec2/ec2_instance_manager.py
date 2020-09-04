@@ -11,7 +11,7 @@ class EC2InstanceManager(BaseManager):
         self.params = params
         self.ec2_connector: EC2Connector = ec2_connector
 
-    def get_server_info(self, instance, itypes, images, eips):
+    def get_server_info(self, instance, itypes, images):
         '''
         server_data = {
             "os_type": "LINUX" | "WINDOWS"
@@ -62,16 +62,15 @@ class EC2InstanceManager(BaseManager):
         os_data = self.get_os_data(instance, match_image, self.get_os_type(instance))
         aws_data = self.get_aws_data(instance)
         hardware_data = self.get_hardware_data(instance, itypes)
-        compute_data = self.get_compute_data(instance, match_image, eips)
-
+        compute_data = self.get_compute_data(instance, match_image)
         server_dic.update({
             'data': {
                 'os': os_data,
                 'aws': aws_data,
                 'hardware': hardware_data,
-                'compute': compute_data,
-                'public_dns': instance.get('PublicDnsName', ''),
-                'public_ip_address': instance.get('PublicIpAddress', '')
+                'compute': compute_data
+                # 'public_dns': instance.get('PublicDnsName', ''),
+                # 'public_ip_address': instance.get('PublicIpAddress', '')
             }
         })
 
@@ -80,14 +79,14 @@ class EC2InstanceManager(BaseManager):
     def get_server_dic(self, instance):
         server_data = {
             'name': self.generate_name(instance),
-            'os_type': self.get_os_type(instance)
+            'os_type': self.get_os_type(instance),
+            'region_code': self.params['region_name'],
         }
-
         return server_data
 
     def get_os_data(self, instance, image, os_type):
         os_data = {
-            'details': image.get('Description', ''),
+            # 'details': image.get('Description', ''),
             'os_distro': self.get_os_distro(image.get('Name', ''), os_type),
             'os_arch': image.get('Architecture', '')
         }
@@ -116,24 +115,46 @@ class EC2InstanceManager(BaseManager):
 
         return Hardware(hardware_data, strict=False)
 
-    def get_compute_data(self, instance, image, eips):
+    def get_compute_data(self, instance, image):
         compute_data = {
-            'eip': self.match_eips_from_instance_id(instance.get('InstanceId'), eips),
+            # 'eip': self.match_eips_from_instance_id(instance.get('InstanceId'), eips),
             'keypair': instance.get('KeyName', ''),
             'az': instance.get('Placement', {}).get('AvailabilityZone', ''),
             'instance_state': instance.get('State', {}).get('Name'),
-            'termination_protection': self.get_termination_protection(instance.get('InstanceId')),
+            # 'termination_protection': self.get_termination_protection(instance.get('InstanceId')),
             'instance_type': instance.get('InstanceType', ''),
             'launched_at': instance.get('LaunchTime'),
-            'region_name': self.params['region_name'],
+            # 'region_name': self.params['region_name'],
             'instance_id': instance.get('InstanceId'),
             'instance_name': self.generate_name(instance),
-            'security_groups': [sg.get('GroupName') for sg in instance.get('SecurityGroups', []) if sg.get('GroupName') is not None],
-            'account_id': '',
-            'image': image.get('Name', '')
+            'security_groups': self._get_security_groups(instance),
+            'account': '',
+            'image': image.get('Name', ''),
+            'tags': self._get_tags_only_string_values(instance)
         }
 
-        return Compute(compute_data)
+        return Compute(compute_data, strict=False)
+
+
+    @staticmethod
+    def _get_security_groups(instance):
+        sg_list = []
+        for sg in instance.get('SecurityGroups', []):
+            if sg.get('GroupName') is not None:
+                sg_name = sg.get('GroupName')
+                sg_id = sg.get('GroupId')
+                sg_dict = dict(name = sg_name, id = sg_id, display = sg_name+'('+sg_id+')')
+                sg_list.append(sg_dict)
+
+        return sg_list
+
+    @staticmethod
+    def _get_tags_only_string_values(instance):
+        tags = {}
+        for k, v in instance.get('tags', {}).items():
+            if isinstance(v, str):
+                tags.update({k: v})
+        return tags
 
     def get_termination_protection(self, instance_id):
         return self.ec2_connector.list_instance_attribute(instance_id)
@@ -151,9 +172,9 @@ class EC2InstanceManager(BaseManager):
 
         return {}
 
-    @staticmethod
-    def match_eips_from_instance_id(instance_id, eips):
-        return [eip.get('PublicIp') for eip in eips if instance_id == eip.get('InstanceId', '')]
+    # @staticmethod
+    # def match_eips_from_instance_id(instance_id, eips):
+    #     return [eip.get('PublicIp') for eip in eips if instance_id == eip.get('InstanceId', '')]
 
     @staticmethod
     def match_instance_type(instance_type, itypes):

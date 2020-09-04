@@ -28,7 +28,6 @@ class TestCollector(TestCase):
         v_info = self.inventory.Collector.init({'options': {}})
         print_json(v_info)
 
-
     def test_verify(self):
         options = {
         }
@@ -46,7 +45,6 @@ class TestCollector(TestCase):
             'aws_secret_access_key': SAK,
         }
         filter = {}
-
         resource_stream = self.inventory.Collector.collect({'options': options, 'secret_data': secret_data,
                                                             'filter': filter})
         # print(resource_stream)

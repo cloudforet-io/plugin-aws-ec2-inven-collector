@@ -5,9 +5,9 @@ import logging
 from spaceone.core.manager import BaseManager
 from spaceone.inventory.connector import EC2Connector
 from spaceone.inventory.manager.ec2 import EC2InstanceManager, AutoScalingGroupManager, LoadBalancerManager, \
-    DiskManager, NICManager, VPCManager, SecurityGroupManager
+    DiskManager, NICManager, VPCManager, SecurityGroupManager, CloudWatchManager
 from spaceone.inventory.manager.metadata.metadata_manager import MetadataManager
-from spaceone.inventory.model.server import Server
+from spaceone.inventory.model.server import Server, ReferenceModel
 from spaceone.inventory.model.region import Region
 
 
@@ -86,13 +86,15 @@ class CollectorManager(BaseManager):
             nic_manager: NICManager = NICManager(params)
             vpc_manager: VPCManager = VPCManager(params)
             sg_manager: SecurityGroupManager = SecurityGroupManager(params)
+            cw_manager: CloudWatchManager = CloudWatchManager(params)
+
             meta_manager: MetadataManager = MetadataManager()
 
             for instance in instances:
                 instance_id = instance.get('InstanceId')
                 instance_ip = instance.get('PrivateIpAddress')
 
-                server_data = ins_manager.get_server_info(instance, itypes, images) # , eips
+                server_data = ins_manager.get_server_info(instance, itypes, images)
                 auto_scaling_group_vo = asg_manager.get_auto_scaling_info(instance_id, auto_scaling_groups,
                                                                           launch_configurations)
 
@@ -108,6 +110,7 @@ class CollectorManager(BaseManager):
                 sg_ids = [security_group.get('GroupId') for security_group in instance.get('SecurityGroups', []) if
                           security_group.get('GroupId') is not None]
                 sg_rules_vos = sg_manager.get_security_group_info(sg_ids, sgs)
+                cloudwatch_vo = cw_manager.get_cloudwatch_info(instance_id, params['region_name'])
 
                 server_data.update({
                     'nics': nic_vos,
@@ -122,6 +125,7 @@ class CollectorManager(BaseManager):
                     'auto_scaling_group': auto_scaling_group_vo,
                     'vpc': vpc_vo,
                     'subnet': subnet_vo,
+                    'cloudwatch': cloudwatch_vo
                 })
 
                 # IP addr : ip_addresses = data.compute.eip + nics.ip_addresses + data.public_ip_address
@@ -134,6 +138,10 @@ class CollectorManager(BaseManager):
 
                 server_data.update({
                     '_metadata': meta_manager.get_metadata(),
+                    'reference': ReferenceModel({
+                        'resource_id': server_data['data']['compute']['instance_id'],
+                        'external_link': f"https://{params.get('region_name')}.console.aws.amazon.com/ec2/v2/home?region={params.get('region_name')}#Instances:instanceId={server_data['data']['compute']['instance_id']}"
+                    })
                 })
 
                 server_vos.append(Server(server_data, strict=False))

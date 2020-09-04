@@ -15,11 +15,10 @@ class EC2InstanceManager(BaseManager):
         '''
         server_data = {
             "os_type": "LINUX" | "WINDOWS"
-            "name": ''
+            "name": ""
             "ip_addresses": []
             "data":  {
                 "os": {
-                    "details": "",
                     "os_distro": "",
                     "os_arch": "",
                 },
@@ -38,20 +37,26 @@ class EC2InstanceManager(BaseManager):
                 },
                 "public_ip_address": "",
                 "compute": {
-                    "eip": [],
                     "keypair": "",
                     "availability_zone": "",
                     "instance_state": "",
                     "instance_type": "",
                     "launched_at": "datetime",
-                    "region_name": "",
                     "instance_id": "",
                     "instance_name": "",
-                    "security_groups": [],
+                    "security_groups": [
+                        {
+                            "id": "",
+                            "name": "",
+                            "display": ""
+                        }, ...
+                    ],
                     "image": "",
-                    "account_id": "",
+                    "account": "",
+                    "tags": {
+                        "arn": ""
+                    }
                 },
-                "public_dns": ""
             }
         }
         '''
@@ -128,13 +133,10 @@ class EC2InstanceManager(BaseManager):
             'instance_id': instance.get('InstanceId'),
             'instance_name': self.generate_name(instance),
             'security_groups': self._get_security_groups(instance),
-            'account': '',
-            'image': image.get('Name', ''),
-            'tags': self._get_tags_only_string_values(instance)
+            'image': image.get('Name', '')
         }
 
         return Compute(compute_data, strict=False)
-
 
     @staticmethod
     def _get_security_groups(instance):

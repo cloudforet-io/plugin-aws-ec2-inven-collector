@@ -6,4 +6,6 @@ from spaceone.inventory.manager.ec2.nic_manager import NICManager
 from spaceone.inventory.manager.ec2.disk_manager import DiskManager
 from spaceone.inventory.manager.ec2.security_group_manager import SecurityGroupManager
 from spaceone.inventory.manager.metadata.metadata_manager import MetadataManager
+from spaceone.inventory.manager.ec2.cloudwatch_manager import CloudWatchManager
+
 

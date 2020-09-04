@@ -1,7 +1,7 @@
 from schematics import Model
 from schematics.types import serializable, ModelType, ListType, StringType
 from spaceone.inventory.model import OS, AWS, Hardware, SecurityGroup, Compute, LoadBalancer, VPC, Subnet, \
-    AutoScalingGroup, NIC, Disk, ServerMetadata
+    AutoScalingGroup, NIC, Disk, ServerMetadata, CloudWatch
 
 
 class ReferenceModel(Model):
@@ -24,21 +24,21 @@ class ServerData(Model):
     vpc = ModelType(VPC)
     subnet = ModelType(Subnet)
     auto_scaling_group = ModelType(AutoScalingGroup)
-    # cloudwatch = ModelType(CloudWatch)
+    cloudwatch = ModelType(CloudWatch)
     # domain = ModelType(Domain)
 
-    @serializable
-    def cloudwatch(self):
-        return {
-            "namespace": "AWS/EC2",
-            "dimensions": [
-                {
-                    "Name": "InstanceId",
-                    "Value": self.compute.instance_id
-                }
-            ],
-            "region_name": self.compute.region_name
-        }
+    # @serializable
+    # def cloudwatch(self):
+    #     return {
+    #         "namespace": "AWS/EC2",
+    #         "dimensions": [
+    #             {
+    #                 "Name": "InstanceId",
+    #                 "Value": self.compute.instance_id
+    #             }
+    #         ],
+    #         "region_name": self.compute.region_name
+    #     }
 
 
 class Server(Model):
@@ -56,13 +56,11 @@ class Server(Model):
     # NEW
     reference = ModelType(ReferenceModel)
     primary_ip_address = StringType(default='')
-    region_code = StringType()
-    region_type = StringType(default='AWS')
 
-    @serializable
-    def reference(self):
-        return {
-            "resource_id": f"arn:aws:ec2:{self.data.compute.region_name}:{self.data.compute.account_id}:instance/{self.data.compute.instance_id}",
-            "external_link": f"https://{self.data.compute.region_name}.console.aws.amazon.com/ec2/v2/home?region={self.data.compute.region_name}#Instances:instanceId={self.data.compute.instance_id}"
-        }
+    # @serializable
+    # def reference(self):
+    #     return {
+    #         "resource_id": f"arn:aws:ec2:{self.data.compute.region_name}:{self.data.compute.account_id}:instance/{self.data.compute.instance_id}",
+    #         "external_link": f"https://{self.data.compute.region_name}.console.aws.amazon.com/ec2/v2/home?region={self.data.compute.region_name}#Instances:instanceId={self.data.compute.instance_id}"
+    #     }
 

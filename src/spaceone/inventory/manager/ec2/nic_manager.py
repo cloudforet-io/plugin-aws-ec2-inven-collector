@@ -34,7 +34,8 @@ class NICManager(BaseManager):
                 'mac_address': net_inf.get('MacAddress'),
                 'public_ip_address': net_inf.get('Association', {}).get('PublicIp', ''),
                 'tags': {
-                    'public_dns': net_inf.get('Association', {}).get('PublicDnsName', '')
+                    'public_dns': net_inf.get('Association', {}).get('PublicDnsName', ''),
+                    'eni_id': net_inf.get('NetworkInterfaceId', '')
                 }
             }
 

@@ -2,7 +2,8 @@ from schematics import Model
 from schematics.types import StringType, IntType
 
 
-class SecurityGroupRule(Model):
+class SecurityGroup(Model):
+    # priority = IntType()
     protocol = StringType()
     remote = StringType()
     remote_id = StringType(serialize_when_none=False)

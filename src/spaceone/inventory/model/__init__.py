@@ -6,7 +6,7 @@ from spaceone.inventory.model.hardware import Hardware
 from spaceone.inventory.model.load_balancer import LoadBalancer
 from spaceone.inventory.model.nic import NIC
 from spaceone.inventory.model.os import OS
-from spaceone.inventory.model.security_group_rule import SecurityGroupRule
+from spaceone.inventory.model.security_group import SecurityGroup
 from spaceone.inventory.model.subnet import Subnet
 from spaceone.inventory.model.vpc import VPC
 

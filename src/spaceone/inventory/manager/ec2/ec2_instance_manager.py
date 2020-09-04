@@ -143,7 +143,7 @@ class EC2InstanceManager(BaseManager):
             if sg.get('GroupName') is not None:
                 sg_name = sg.get('GroupName')
                 sg_id = sg.get('GroupId')
-                sg_dict = dict(name = sg_name, id = sg_id, display = sg_name+'('+sg_id+')')
+                sg_dict = dict(name = sg_name, id = sg_id, display = sg_name+' ('+sg_id+')')
                 sg_list.append(sg_dict)
 
         return sg_list

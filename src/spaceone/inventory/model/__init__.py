@@ -9,6 +9,7 @@ from spaceone.inventory.model.os import OS
 from spaceone.inventory.model.security_group import SecurityGroup
 from spaceone.inventory.model.subnet import Subnet
 from spaceone.inventory.model.vpc import VPC
+from spaceone.inventory.model.cloudwatch import CloudWatch
 
 # METADATA
 from spaceone.inventory.model.metadata.metadata import *

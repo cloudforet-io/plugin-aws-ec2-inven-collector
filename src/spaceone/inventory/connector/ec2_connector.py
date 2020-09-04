@@ -15,7 +15,7 @@ RESOURCES = ['cloudformation', 'cloudwatch', 'dynamodb', 'ec2', 'glacier', 'iam'
 
 class EC2Connector(BaseConnector):
 
-    def __init__(self, transaction=None, conf=None):
+    def __init__(self, transaction=None, config=None):
         self.session = None
         self.ec2_client = None
         self.asg_client = None
@@ -260,11 +260,10 @@ class EC2Connector(BaseConnector):
     def _generate_query(is_paginate=False, **query):
         if is_paginate:
             query.update({
-                'PaginationConfig':{
+                'PaginationConfig': {
                     'MaxItems': PAGINATOR_MAX_ITEMS,
                     'PageSize': PAGINATOR_PAGE_SIZE,
                 }
             })
 
         return query
-      

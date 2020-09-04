@@ -43,6 +43,8 @@ class ServerData(Model):
 
 class Server(Model):
     name = StringType()
+    region_code = StringType()
+    region_type = StringType(default='AWS')
     data = ModelType(ServerData)
     nics = ListType(ModelType(NIC))
     disks = ListType(ModelType(Disk))

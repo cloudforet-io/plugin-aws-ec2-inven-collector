@@ -14,6 +14,7 @@ class AWSIAMInstanceProfile(Model):
 
 class AWS(Model):
     ebs_optimized = BooleanType()
-    iam_instance_profile = ModelType(AWSIAMInstanceProfile)
+    iam_instance_profile = ModelType(AWSIAMInstanceProfile, serialize_when_none=False)
+    termination_protection = BooleanType()
     lifecycle = StringType(choices=('spot', 'scheduled'), serialize_when_none=False)
     tags = ListType(ModelType(Tags))

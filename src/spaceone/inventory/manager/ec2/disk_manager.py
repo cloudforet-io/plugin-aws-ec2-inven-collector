@@ -28,7 +28,6 @@ class DiskManager(BaseManager):
 
         index = 0
         for match_volume in match_volumes:
-
             volume_data = {
                 'device_index': index,
                 'device': self.get_device(match_volume),

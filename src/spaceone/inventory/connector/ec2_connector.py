@@ -6,7 +6,7 @@ import logging
 from spaceone.core.error import *
 from spaceone.core import utils
 from spaceone.core.connector import BaseConnector
-from pprint import pprint
+
 _LOGGER = logging.getLogger(__name__)
 DEFAULT_REGION = 'us-east-1'
 PAGINATOR_MAX_ITEMS = 10000

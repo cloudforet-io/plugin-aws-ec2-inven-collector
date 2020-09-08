@@ -63,7 +63,8 @@ class NICManager(BaseManager):
     def get_device(net_inf):
         return ""
 
-    def match_eip_from_instance_id(self, instance_id, eips):
+    @staticmethod
+    def match_eip_from_instance_id(instance_id, eips):
         for eip in eips:
             if eip.get('InstanceId') == instance_id:
                 return eip

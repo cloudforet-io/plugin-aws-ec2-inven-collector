@@ -44,7 +44,6 @@ class DiskManager(BaseManager):
                     'iops': match_volume.get('Iops')
                 })
 
-
             disks.append(Disk(volume_data, strict=False))
             index += 1
 

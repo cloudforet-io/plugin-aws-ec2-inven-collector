@@ -30,7 +30,8 @@ class CloudWatchManager(BaseManager):
 
         return CloudWatch(cloudwatch_data, strict=False)
 
-    def get_dimensions(self, instance_id):
+    @staticmethod
+    def get_dimensions(instance_id):
         '''
         "dimensions": [
             {
@@ -39,6 +40,7 @@ class CloudWatchManager(BaseManager):
             }
         ]
         '''
+
         dimension = {
             'name': 'InstanceId',
             'value': instance_id

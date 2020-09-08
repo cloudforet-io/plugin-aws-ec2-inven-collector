@@ -15,5 +15,3 @@ class Disk(Model):
     disk_type = StringType(default="EBS")
     size = FloatType()
     tags = ModelType(DiskTags, default={})
-
-

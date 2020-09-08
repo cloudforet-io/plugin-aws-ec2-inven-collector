@@ -49,21 +49,24 @@ class VPCManager(BaseManager):
 
         return VPC(vpc_data, strict=False), Subnet(subnet_data, strict=False)
 
-    def get_vpc(self, vpc_id, vpcs):
+    @staticmethod
+    def get_vpc(vpc_id, vpcs):
         for vpc in vpcs:
             if vpc_id == vpc['VpcId']:
                 return vpc
 
         return None
 
-    def get_subnet(self, subnet_id, subnets):
+    @staticmethod
+    def get_subnet(subnet_id, subnets):
         for subnet in subnets:
             if subnet_id == subnet['SubnetId']:
                 return subnet
 
         return None
 
-    def generate_arn(self, resource_type, owner_id, resource_id, region_name):
+    @staticmethod
+    def generate_arn(resource_type, owner_id, resource_id, region_name):
         return f'arn:aws:ec2:{region_name}:{owner_id}:{resource_type}/{resource_id}'
 
     @staticmethod

@@ -4,7 +4,7 @@ from schematics.types import StringType, ModelType, ListType
 
 class CloudWatchDemension(Model):
     name = StringType(serialized_name='Name')
-    value = StringType(serialize_when_none='Value')
+    value = StringType(serialized_name='Value')
 
 
 class CloudWatch(Model):

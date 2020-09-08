@@ -25,16 +25,18 @@ ec2_instance = ItemDynamicLayout.set_fields('EC2 Instance', fields=[
     TextDyField.data_source('AMI ID', 'data.compute.image'),
     TextDyField.data_source('Region', 'region_code'),
     TextDyField.data_source('Availability Zone', 'data.compute.az'),
-    # EnumDyField.data_source('Termination Protection', 'data.compute.termination_protection', default_badge={
-    #     'indigo.500': ['true'], 'coral.600': ['false']
-    # }),
-    # TextDyField.data_source('Public DNS', 'data.public_dns'),
-    # TextDyField.data_source('Public IP', 'data.public_ip_address'),
+    EnumDyField.data_source('Termination Protection', 'data.aws.termination_protection', default_badge={
+        'indigo.500': ['true'], 'coral.600': ['false']
+    }),
+    ListDyField.data_source('Public DNS', 'nics',
+                            default_badge={'type': 'outline', 'sub_key': 'tags.public_dns'}),
+    ListDyField.data_source('Public IP', 'nics',
+                            default_badge={'type': 'outline', 'sub_key': 'public_ip_address'}),
     # ListDyField.data_source('Elastic IPs', 'data.compute.eip',
     #                         default_badge={'type': 'outline', 'delimiter': '<br>'}),
-    ListDyField.data_source('Security Groups', 'data.compute.security_groups.display',
-                            default_badge={'type': 'outline', 'delimiter': '<br>'}),
-    TextDyField.data_source('Account ID', 'data.compute.account_id'),
+    ListDyField.data_source('Security Groups', 'data.compute.security_groups',
+                            default_badge={'type': 'outline', 'delimiter': '<br>', 'sub_key': 'display'}),
+    TextDyField.data_source('Account ID', 'data.compute.account'),
     DateTimeDyField.data_source('Launched At', 'data.compute.launched_at'),
 ])
 
@@ -74,7 +76,7 @@ nic = TableDynamicLayout.set_fields('NIC', root_path='nics', fields=[
     TextDyField.data_source('Public DNS', 'tags.public_dns')
 ])
 
-security_group = TableDynamicLayout.set_fields('Security Groups', root_path='data.security_group_rules', fields=[
+security_group = TableDynamicLayout.set_fields('Security Groups', root_path='data.security_group', fields=[
     EnumDyField.data_source('Direction', 'direction', default_badge={
         'indigo.500': ['inbound'], 'coral.600': ['outbound']
     }),
@@ -108,7 +110,8 @@ metadata = ServerMetadata.set_layouts([ec2, tags, disk, nic, security_group, elb
 
 class MetadataManager(BaseManager):
 
-    def __init__(self):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.metadata = metadata
 
     def get_metadata(self):

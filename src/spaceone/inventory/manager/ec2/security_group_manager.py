@@ -10,7 +10,7 @@ class SecurityGroupManager(BaseManager):
 
     def get_security_group_info(self, security_group_ids, security_groups):
         '''
-        "data.security_group_rules" = [
+        "data.security_group" = [
                     {
                         "protocol": "",
                         "security_group_name": "",
@@ -76,14 +76,16 @@ class SecurityGroupManager(BaseManager):
 
         return sg_data
 
-    def set_ip_range_data(self, ip_range):
+    @staticmethod
+    def set_ip_range_data(ip_range):
         return {
             'remote_cidr': ip_range.get('CidrIp'),
             'remote': ip_range.get('CidrIp'),
             'description': ip_range.get('Description', '')
         }
 
-    def set_group_pairs_data(self, group_pair):
+    @staticmethod
+    def set_group_pairs_data(group_pair):
         return {
             'remote_id': group_pair.get('GroupId'),
             'remote': group_pair.get('GroupId'),

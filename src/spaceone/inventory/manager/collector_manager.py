@@ -122,13 +122,17 @@ class CollectorManager(BaseManager):
                 server_data['data'].update({
                     'load_balancer': load_balancer_vos,
                     'security_group': sg_rules_vos,
-                    'auto_scaling_group': auto_scaling_group_vo,
                     'vpc': vpc_vo,
                     'subnet': subnet_vo,
                     'cloudwatch': cloudwatch_vo
                 })
 
-                # IP addr : ip_addresses = data.compute.eip + nics.ip_addresses + data.public_ip_address
+                if auto_scaling_group_vo:
+                    server_data['data'].update({
+                        'auto_scaling_group': auto_scaling_group_vo
+                    })
+
+                # IP addr : ip_addresses = nics.ip_addresses + data.public_ip_address
                 server_data.update({
                     'ip_addresses': self.merge_ip_addresses(server_data),
                     'primary_ip_address': instance_ip
@@ -160,15 +164,17 @@ class CollectorManager(BaseManager):
             print(f'[ERROR: {params["region_name"]}] : {e}')
             return []
 
-    def get_volume_ids(self, instance):
+    @staticmethod
+    def get_volume_ids(instance):
         block_device_mappings = instance.get('BlockDeviceMappings', [])
         return [block_device_mapping['Ebs']['VolumeId'] for block_device_mapping in block_device_mappings if block_device_mapping.get('Ebs') is not None]
 
-    def get_image_ids(self, instances):
+    @staticmethod
+    def get_image_ids(instances):
         return [instance.get('ImageId') for instance in instances if instance.get('ImageId') is not None]
 
-    def merge_ip_addresses(self, server_data):
-        compute_data = server_data['data']['compute']
+    @staticmethod
+    def merge_ip_addresses(server_data):
         nics = server_data['nics']
 
         nic_ip_addresses = []

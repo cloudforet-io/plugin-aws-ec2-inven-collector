@@ -16,5 +16,5 @@ class LaunchTemplate(Model):
 class AutoScalingGroup(Model):
     arn = StringType()
     name = StringType()
-    launch_configuration = ModelType(LaunchConfiguration)
-    launch_template = ModelType(LaunchTemplate)
+    launch_configuration = ModelType(LaunchConfiguration, serialize_when_none=False)
+    launch_template = ModelType(LaunchTemplate, serialize_when_none=False)

@@ -60,25 +60,6 @@ class LoadBalancerManager(BaseManager):
 
         return match_load_balancers
 
-    def match_target_groups(self, target_groups, instance_id, instance_ip):
-        match_target_groups = []
-
-        for target_group in target_groups:
-            target_group_arn = target_group.get('TargetGroupArn')
-            target_type = target_group.get('TargetType')                                # instance | ip | lambda
-
-            for th in target_group.get('target_healths'):
-                target = th.get('Target', {})
-                target_id = target.get('Id')
-
-                if target_id is not None and target_id not in match_target_groups:
-                    if target_type == 'instance' and instance_id == target_id:
-                        match_target_groups.append(target_group)
-                    elif target_type == 'ip' and instance_ip == target_id:
-                        match_target_groups.append(target_group)
-
-        return match_target_groups
-
     def match_load_balancers(self, load_balancers, lb_arns):
         match_load_balancers = []
 
@@ -94,3 +75,23 @@ class LoadBalancerManager(BaseManager):
 
     def get_listeners(self, lb_arn):
         return self.ec2_connector.list_listners(lb_arn)
+
+    @staticmethod
+    def match_target_groups(target_groups, instance_id, instance_ip):
+        match_target_groups = []
+
+        for target_group in target_groups:
+            target_group_arn = target_group.get('TargetGroupArn')
+            target_type = target_group.get('TargetType')  # instance | ip | lambda
+
+            for th in target_group.get('target_healths'):
+                target = th.get('Target', {})
+                target_id = target.get('Id')
+
+                if target_id is not None and target_id not in match_target_groups:
+                    if target_type == 'instance' and instance_id == target_id:
+                        match_target_groups.append(target_group)
+                    elif target_type == 'ip' and instance_ip == target_id:
+                        match_target_groups.append(target_group)
+
+        return match_target_groups

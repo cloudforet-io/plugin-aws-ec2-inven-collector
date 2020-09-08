@@ -11,6 +11,4 @@ class LoadBalancer(Model):
     name = StringType()
     protocol = ListType(StringType())
     scheme = StringType(choices=('internet-facing', 'internal'))
-    # arn = StringType()
-    # tags = DictType(StringType, default={})
     tags = ModelType(LoadBalancerTags, default={})

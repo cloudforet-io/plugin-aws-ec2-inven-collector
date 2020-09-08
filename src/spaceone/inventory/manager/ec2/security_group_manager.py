@@ -1,16 +1,16 @@
 from spaceone.core.manager import BaseManager
-from spaceone.inventory.model.security_group_rule import SecurityGroupRule
+from spaceone.inventory.model.security_group import SecurityGroup
 
 
-class SecurityGroupRuleManager(BaseManager):
+class SecurityGroupManager(BaseManager):
 
     def __init__(self, params, ec2_connector=None):
         self.params = params
         self.ec2_connector = ec2_connector
 
-    def get_security_group_rules_info(self, security_group_ids, security_groups):
+    def get_security_group_info(self, security_group_ids, security_groups):
         '''
-        "data.security_group_rules" = [
+        "data.security_group" = [
                     {
                         "protocol": "",
                         "security_group_name": "",
@@ -27,38 +27,38 @@ class SecurityGroupRuleManager(BaseManager):
                 ],
         '''
 
-        sg_rules = []
+        sg = []
         match_security_groups = self.match_security_group_from_ids(security_group_ids, security_groups)
 
         for match_sg in match_security_groups:
             # INBOUND
             for inbound_rule in match_sg.get('IpPermissions', []):
-                sg_data = self.set_sg_rule_base_data(match_sg, 'inbound', inbound_rule)
+                sg_data = self.set_sg_base_data(match_sg, 'inbound', inbound_rule)
 
                 for ip_range in inbound_rule.get('IpRanges', []):
                     sg_data.update(self.set_ip_range_data(ip_range))
-                    sg_rules.append(SecurityGroupRule(sg_data, strict=False))
+                    sg.append(SecurityGroup(sg_data, strict=False))
 
                 for group_pair in inbound_rule.get('UserIdGroupPairs', []):
                     sg_data.update(self.set_group_pairs_data(group_pair))
-                    sg_rules.append(SecurityGroupRule(sg_data, strict=False))
+                    sg.append(SecurityGroup(sg_data, strict=False))
 
             # OUTBOUND
             for outbound_rules in match_sg.get('IpPermissionsEgress', []):
-                sg_data = self.set_sg_rule_base_data(match_sg, 'outbound', outbound_rules)
+                sg_data = self.set_sg_base_data(match_sg, 'outbound', outbound_rules)
 
                 for ip_range in outbound_rules.get('IpRanges', []):
                     sg_data.update(self.set_ip_range_data(ip_range))
-                    sg_rules.append(SecurityGroupRule(sg_data, strict=False))
+                    sg.append(SecurityGroup(sg_data, strict=False))
 
                 for group_pair in outbound_rules.get('UserIdGroupPairs', []):
                     sg_data.update(self.set_group_pairs_data(group_pair))
-                    sg_rules.append(SecurityGroupRule(sg_data, strict=False))
+                    sg.append(SecurityGroup(sg_data, strict=False))
 
-        return sg_rules
+        return sg
 
-    def set_sg_rule_base_data(self, sg, direction, rule):
-        sg_rule_data = {
+    def set_sg_base_data(self, sg, direction, rule):
+        sg_data = {
             'direction': direction,
             'protocol': self._get_protocol(rule.get('IpProtocol')),
             'security_group_name': sg.get('GroupName', ''),
@@ -68,22 +68,24 @@ class SecurityGroupRuleManager(BaseManager):
         from_port, to_port, port = self._get_port(rule)
 
         if from_port is not None:
-            sg_rule_data.update({
+            sg_data.update({
                 'port_range_min': from_port,
                 'port_range_max': to_port,
                 'port': port
             })
 
-        return sg_rule_data
+        return sg_data
 
-    def set_ip_range_data(self, ip_range):
+    @staticmethod
+    def set_ip_range_data(ip_range):
         return {
             'remote_cidr': ip_range.get('CidrIp'),
             'remote': ip_range.get('CidrIp'),
             'description': ip_range.get('Description', '')
         }
 
-    def set_group_pairs_data(self, group_pair):
+    @staticmethod
+    def set_group_pairs_data(group_pair):
         return {
             'remote_id': group_pair.get('GroupId'),
             'remote': group_pair.get('GroupId'),

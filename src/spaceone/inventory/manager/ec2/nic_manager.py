@@ -34,7 +34,8 @@ class NICManager(BaseManager):
                 'mac_address': net_inf.get('MacAddress'),
                 'public_ip_address': net_inf.get('Association', {}).get('PublicIp', ''),
                 'tags': {
-                    'public_dns': net_inf.get('Association', {}).get('PublicDnsName', '')
+                    'public_dns': net_inf.get('Association', {}).get('PublicDnsName', ''),
+                    'eni_id': net_inf.get('NetworkInterfaceId', '')
                 }
             }
 
@@ -62,7 +63,8 @@ class NICManager(BaseManager):
     def get_device(net_inf):
         return ""
 
-    def match_eip_from_instance_id(self, instance_id, eips):
+    @staticmethod
+    def match_eip_from_instance_id(instance_id, eips):
         for eip in eips:
             if eip.get('InstanceId') == instance_id:
                 return eip

@@ -4,6 +4,7 @@ from schematics.types import StringType, IntType, ListType, DictType, ModelType
 
 class NICTags(Model):
     public_dns = StringType(serialize_when_none=False)
+    eni_id = StringType(serialize_when_none=False)
 
 
 class NIC(Model):

@@ -26,9 +26,8 @@ class AutoScalingGroupManager(BaseManager):
         '''
 
         auto_scaling_group_data = {}
-        match_autoscaling_group, match_launch_configuration = self.get_auto_scaling_group_from_instance_id(instance_id,
-                                                                                                           auto_scaling_groups,
-                                                                                                           launch_configurations)
+        match_autoscaling_group, match_launch_configuration = \
+            self.get_auto_scaling_group_from_instance_id(instance_id, auto_scaling_groups, launch_configurations)
 
         if match_autoscaling_group is not None:
             auto_scaling_group_data = {
@@ -53,7 +52,8 @@ class AutoScalingGroupManager(BaseManager):
         else:
             return None
 
-    def get_auto_scaling_group_from_instance_id(self, instance_id, auto_scaling_groups, launch_configurations):
+    @staticmethod
+    def get_auto_scaling_group_from_instance_id(instance_id, auto_scaling_groups, launch_configurations):
         match_auto_scaling_group = None
         match_launch_configuration = None
         match_lc_name = None

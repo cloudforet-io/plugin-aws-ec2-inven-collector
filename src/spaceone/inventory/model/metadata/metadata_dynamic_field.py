@@ -24,10 +24,16 @@ class Icon(Model):
     color = StringType(default='green', choices=BACKGROUND_COLORS)
 
 
+class Reference(Model):
+    resource_type = StringType()
+    reference_key = StringType()
+
+
 class BaseField(Model):
     type = StringType(choices=["text", "state", "badge", "list", "dict", "datetime", "image", "enum"],
                       serialize_when_none=False)
     options = PolyModelType([Model, DictType(PolyModelType(Model))], serialize_when_none=False)
+    reference = ModelType(Reference, serialize_when_none=False)
 
 
 class FieldViewOption(BaseField):
@@ -85,6 +91,9 @@ class TextDyField(BaseDynamicField):
         if 'options' in kwargs:
             _data_source.update({'options': TextDyFieldOptions(kwargs.get('options'))})
 
+        if 'reference' in kwargs:
+            _data_source.update({'reference': kwargs.get('reference')})
+
         return cls(_data_source)
 
 
@@ -97,6 +106,9 @@ class StateDyField(BaseDynamicField):
         _data_source = {'key': key, 'name': name}
         if 'options' in kwargs:
             _data_source.update({'options': StateDyFieldOptions(kwargs.get('options'))})
+
+        if 'reference' in kwargs:
+            _data_source.update({'reference': kwargs.get('reference')})
 
         return cls(_data_source)
 
@@ -116,6 +128,9 @@ class BadgeDyField(BaseDynamicField):
         if 'options' in kwargs:
             _data_source.update({'options': BadgeDyFieldOptions(kwargs.get('options'))})
 
+        if 'reference' in kwargs:
+            _data_source.update({'reference': kwargs.get('reference')})
+
         return cls(_data_source)
 
 
@@ -129,6 +144,9 @@ class ImageDyField(BaseDynamicField):
         if 'options' in kwargs:
             _data_source.update({'options': ImageDyFieldOptions(kwargs.get('options'))})
 
+        if 'reference' in kwargs:
+            _data_source.update({'reference': kwargs.get('reference')})
+
         return cls(_data_source)
 
 
@@ -141,6 +159,9 @@ class DateTimeDyField(BaseDynamicField):
         _data_source = {'key': key, 'name': name}
         if 'options' in kwargs:
             _data_source.update({'options': DateTimeDyFieldOptions(kwargs.get('options'))})
+
+        if 'reference' in kwargs:
+            _data_source.update({'reference': kwargs.get('reference')})
 
         return cls(_data_source)
 
@@ -220,6 +241,9 @@ class ListDyField(BaseDynamicField):
         if 'options' in kwargs:
             _data_source.update({'options': ListDyFieldOptions(kwargs.get('options'))})
 
+        if 'reference' in kwargs:
+            _data_source.update({'reference': kwargs.get('reference')})
+
         return cls(_data_source)
 
 
@@ -276,5 +300,8 @@ class EnumDyField(BaseDynamicField):
 
         if 'options' in kwargs:
             _data_source.update({'options': kwargs.get('options')})
+
+        if 'reference' in kwargs:
+            _data_source.update({'reference': kwargs.get('reference')})
 
         return cls(_data_source)

@@ -32,24 +32,38 @@ ec2_instance = ItemDynamicLayout.set_fields('EC2 Instance', fields=[
                             default_badge={'type': 'outline', 'sub_key': 'tags.public_dns'}),
     ListDyField.data_source('Public IP', 'nics',
                             default_badge={'type': 'outline', 'sub_key': 'public_ip_address'}),
-    # ListDyField.data_source('Elastic IPs', 'data.compute.eip',
-    #                         default_badge={'type': 'outline', 'delimiter': '<br>'}),
     ListDyField.data_source('Security Groups', 'data.compute.security_groups',
-                            default_badge={'type': 'outline', 'delimiter': '<br>', 'sub_key': 'display'}),
+                            default_badge={'type': 'outline', 'delimiter': '<br>', 'sub_key': 'display'},
+                            reference={
+                                'resource_type': 'inventory.CloudService',
+                                'reference_key': 'data.group_id'
+                            }),
     TextDyField.data_source('Account ID', 'data.compute.account'),
     DateTimeDyField.data_source('Launched At', 'data.compute.launched_at'),
 ])
 
 ec2_vpc = ItemDynamicLayout.set_fields('VPC', fields=[
-    TextDyField.data_source('VPC ID', 'data.vpc.vpc_id'),
+    TextDyField.data_source('VPC ID', 'data.vpc.vpc_id', reference={
+        'resource_type': 'inventory.CloudService',
+        'reference_key': 'data.vpc_id'
+    }),
     TextDyField.data_source('VPC Name', 'data.vpc.vpc_name'),
-    TextDyField.data_source('Subnet ID', 'data.subnet.subnet_id'),
+    TextDyField.data_source('Subnet ID', 'data.subnet.subnet_id', reference={
+        'resource_type': 'inventory.CloudService',
+        'reference_key': 'data.subnet_id'
+    }),
     TextDyField.data_source('Subnet Name', 'data.subnet.subnet_name'),
 ])
 
 ec2_asg = ItemDynamicLayout.set_fields('Auto Scaling Group', fields=[
-    TextDyField.data_source('Auto Scaling Group', 'data.auto_scaling_group.name'),
-    TextDyField.data_source('Launch Configuration', 'data.auto_scaling_group.launch_configuration.name'),
+    TextDyField.data_source('Auto Scaling Group', 'data.auto_scaling_group.name', reference={
+        'resource_type': 'inventory.CloudService',
+        'reference_key': 'data.auto_scaling_group_name'
+    }),
+    TextDyField.data_source('Launch Configuration', 'data.auto_scaling_group.launch_configuration.name', reference={
+        'resource_type': 'inventory.CloudService',
+        'reference_key': 'data.launch_configuration_name'
+    }),
     TextDyField.data_source('Launch Template', 'data.auto_scaling_group.launch_template.name'),
 ])
 

@@ -101,7 +101,7 @@ security_group = TableDynamicLayout.set_fields('Security Groups', root_path='dat
     TextDyField.data_source('Description', 'description'),
 ])
 
-elb = TableDynamicLayout.set_fields('ELB', root_path='data.load_balancers', fields=[
+elb = TableDynamicLayout.set_fields('ELB', root_path='data.load_balancer', fields=[
     TextDyField.data_source('Name', 'name', reference={
         'resource_type': 'inventory.CloudService',
         'reference_key': 'data.load_balancer_name'

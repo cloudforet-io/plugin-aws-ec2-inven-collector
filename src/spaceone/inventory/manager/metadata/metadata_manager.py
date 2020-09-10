@@ -94,7 +94,10 @@ security_group = TableDynamicLayout.set_fields('Security Groups', root_path='dat
     EnumDyField.data_source('Direction', 'direction', default_badge={
         'indigo.500': ['inbound'], 'coral.600': ['outbound']
     }),
-    TextDyField.data_source('Name', 'security_group_name'),
+    TextDyField.data_source('Name', 'security_group_name', reference={
+        'resource_type': 'inventory.CloudService',
+        'reference_key': 'data.group_name'
+    }),
     EnumDyField.data_source('Protocol', 'protocol', default_outline_badge=['ALL', 'TCP', 'UDP', 'ICMP']),
     TextDyField.data_source('Port Rage', 'port'),
     TextDyField.data_source('Remote', 'remote'),

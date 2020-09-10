@@ -102,8 +102,14 @@ security_group = TableDynamicLayout.set_fields('Security Groups', root_path='dat
 ])
 
 elb = TableDynamicLayout.set_fields('ELB', root_path='data.load_balancers', fields=[
-    TextDyField.data_source('Name', 'name'),
-    TextDyField.data_source('DNS', 'dns'),
+    TextDyField.data_source('Name', 'name', reference={
+        'resource_type': 'inventory.CloudService',
+        'reference_key': 'data.load_balancer_name'
+    }),
+    TextDyField.data_source('DNS', 'dns', reference={
+        'resource_type': 'inventory.CloudService',
+        'reference_key': 'data.dns_name'
+    }),
     EnumDyField.data_source('Type', 'type', default_badge={
         'indigo.500': ['network'], 'coral.600': ['application']
     }),

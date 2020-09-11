@@ -9,7 +9,7 @@ class ComputeTags(Model):
 class Compute(Model):
     keypair = StringType()
     az = StringType()
-    instance_state = StringType(choices=('pending', 'running', 'shutting-down', 'terminated', 'stopping', 'stopped'))
+    instance_state = StringType(choices=('PENDING', 'RUNNING', 'SHUTTING-DOWN', 'TERMINATED', 'STOPPING', 'STOPPED'))
     instance_type = StringType()
     launched_at = DateTimeType()
     instance_id = StringType(default='')

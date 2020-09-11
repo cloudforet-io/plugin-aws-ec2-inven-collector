@@ -8,10 +8,10 @@ from spaceone.inventory.model.metadata.metadata_dynamic_field import TextDyField
 ec2_instance = ItemDynamicLayout.set_fields('EC2 Instance', fields=[
     TextDyField.data_source('Instance ID', 'data.compute.instance_id'),
     EnumDyField.data_source('Instance State', 'data.compute.instance_state', default_state={
-        'safe': ['running'],
-        'warning': ['pending', 'stopping'],
-        'disable': ['shutting-down'],
-        'alert': ['stopped']
+        'safe': ['RUNNING'],
+        'warning': ['PENDING', 'STOPPING'],
+        'disable': ['SHUTTING-DOWN'],
+        'alert': ['STOPPED']
     }),
     TextDyField.data_source('Instance Type', 'data.compute.instance_type'),
     EnumDyField.data_source('EC2 Lifecycle', 'data.aws.lifecycle', default_badge={
@@ -74,7 +74,8 @@ disk = TableDynamicLayout.set_fields('Disk', root_path='disks', fields=[
     TextDyField.data_source('Name', 'device'),
     TextDyField.data_source('Size(GiB)', 'size'),
     TextDyField.data_source('Volume ID', 'tags.volume_id'),
-    EnumDyField.data_source('Volume Type', 'tags.volume_type', default_outline_badge=['gp2', 'io1', 'sc1', 'st1', 'standard']),
+    EnumDyField.data_source('Volume Type', 'tags.volume_type',
+                            default_outline_badge=['gp2', 'io1', 'sc1', 'st1', 'standard']),
     TextDyField.data_source('IOPS', 'tags.iops'),
     EnumDyField.data_source('Encrypted', 'tags.encrypted', default_badge={
         'indigo.500': ['true'], 'coral.600': ['false']

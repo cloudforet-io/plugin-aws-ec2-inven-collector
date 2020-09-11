@@ -127,7 +127,7 @@ class EC2InstanceManager(BaseManager):
             # 'eip': self.match_eips_from_instance_id(instance.get('InstanceId'), eips),
             'keypair': instance.get('KeyName', ''),
             'az': instance.get('Placement', {}).get('AvailabilityZone', ''),
-            'instance_state': instance.get('State', {}).get('Name'),
+            'instance_state': instance.get('State', {}).get('Name').upper(),
             'instance_type': instance.get('InstanceType', ''),
             'launched_at': instance.get('LaunchTime'),
             'instance_id': instance.get('InstanceId'),

@@ -72,16 +72,6 @@ class CollectorService(BaseService):
         super().__init__(metadata)
         self.collector_manager: CollectorManager = self.locator.get_manager('CollectorManager')
 
-    @check_required(['options'])
-    def init(self, params):
-        """ init plugin by options
-        """
-        capability = {
-            'filter_format': FILTER_FORMAT,
-            'supported_resource_type': SUPPORTED_RESOURCE_TYPE
-        }
-        return {'metadata': capability}
-
     @transaction
     @check_required(['options'])
     def init(self, params):

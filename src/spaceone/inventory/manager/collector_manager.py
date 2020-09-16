@@ -171,7 +171,8 @@ class CollectorManager(BaseManager):
 
     @staticmethod
     def get_image_ids(instances):
-        return [instance.get('ImageId') for instance in instances if instance.get('ImageId') is not None]
+        image_ids = [instance.get('ImageId') for instance in instances if instance.get('ImageId') is not None]
+        return list(dict.fromkeys(image_ids))
 
     @staticmethod
     def merge_ip_addresses(server_data):

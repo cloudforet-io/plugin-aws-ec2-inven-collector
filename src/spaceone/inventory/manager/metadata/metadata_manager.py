@@ -64,7 +64,10 @@ ec2_asg = ItemDynamicLayout.set_fields('Auto Scaling Group', fields=[
         'resource_type': 'inventory.CloudService',
         'reference_key': 'data.launch_configuration_name'
     }),
-    TextDyField.data_source('Launch Template', 'data.auto_scaling_group.launch_template.name'),
+    TextDyField.data_source('Launch Template', 'data.auto_scaling_group.launch_template.name', reference={
+        'resource_type': 'inventory.CloudService',
+        'reference_key': 'data.launch_template_name'
+    }),
 ])
 
 ec2 = ListDynamicLayout.set_layouts('AWS EC2', layouts=[ec2_instance, ec2_vpc, ec2_asg])
@@ -110,7 +113,7 @@ elb = TableDynamicLayout.set_fields('ELB', root_path='data.load_balancer', field
         'resource_type': 'inventory.CloudService',
         'reference_key': 'data.load_balancer_name'
     }),
-    TextDyField.data_source('DNS', 'dns', reference={
+    TextDyField.data_source('Endpoint', 'endpoint', reference={
         'resource_type': 'inventory.CloudService',
         'reference_key': 'data.dns_name'
     }),

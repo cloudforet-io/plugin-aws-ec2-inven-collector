@@ -48,19 +48,30 @@ class CollectorManager(BaseManager):
         print(f'===== [{params["region_name"]}]  /  INSTANCE COUNT : {len(instances)}')
 
         if len(instances) > 0:
+            ins_manager: EC2InstanceManager = EC2InstanceManager(params, ec2_connector=ec2_connector)
+            asg_manager: AutoScalingGroupManager = AutoScalingGroupManager(params)
+            elb_manager: LoadBalancerManager = LoadBalancerManager(params, ec2_connector=ec2_connector)
+            disk_manager: DiskManager = DiskManager(params)
+            nic_manager: NICManager = NICManager(params)
+            vpc_manager: VPCManager = VPCManager(params)
+            sg_manager: SecurityGroupManager = SecurityGroupManager(params)
+            cw_manager: CloudWatchManager = CloudWatchManager(params)
+
+            meta_manager: MetadataManager = MetadataManager()
+
             # Instance Type
             itypes = ec2_connector.list_instance_types()
 
             # Image
             images = ec2_connector.list_images(ImageIds=self.get_image_ids(instances))
 
-            # Autoscaling group list
+            # Auto Scaling group list
             auto_scaling_groups = ec2_connector.list_auto_scaling_groups()
             launch_configurations = ec2_connector.list_launch_configurations()
 
             # LB list
             load_balancers = ec2_connector.list_load_balancers()
-            self.set_listeners_into_load_balancers(load_balancers, ec2_connector)
+            elb_manager.set_listeners_into_load_balancers(load_balancers)
 
             target_groups = ec2_connector.list_target_groups()
 
@@ -80,17 +91,6 @@ class CollectorManager(BaseManager):
 
             # Security Group
             sgs = ec2_connector.list_security_groups()
-
-            ins_manager: EC2InstanceManager = EC2InstanceManager(params, ec2_connector=ec2_connector)
-            asg_manager: AutoScalingGroupManager = AutoScalingGroupManager(params)
-            elb_manager: LoadBalancerManager = LoadBalancerManager(params)
-            disk_manager: DiskManager = DiskManager(params)
-            nic_manager: NICManager = NICManager(params)
-            vpc_manager: VPCManager = VPCManager(params)
-            sg_manager: SecurityGroupManager = SecurityGroupManager(params)
-            cw_manager: CloudWatchManager = CloudWatchManager(params)
-
-            meta_manager: MetadataManager = MetadataManager()
 
             for instance in instances:
                 instance_id = instance.get('InstanceId')
@@ -167,15 +167,6 @@ class CollectorManager(BaseManager):
             raise e
 
     @staticmethod
-    def set_listeners_into_load_balancers(load_balancers, ec2_connector):
-        for lb in load_balancers:
-            lb_arn = lb.get('LoadBalancerArn', '')
-            listeners = ec2_connector.list_listeners(lb_arn)
-            lb.update({
-                'listeners': listeners
-            })
-
-    @staticmethod
     def get_volume_ids(instance):
         block_device_mappings = instance.get('BlockDeviceMappings', [])
         return [block_device_mapping['Ebs']['VolumeId'] for block_device_mapping in block_device_mappings if block_device_mapping.get('Ebs') is not None]
@@ -183,7 +174,7 @@ class CollectorManager(BaseManager):
     @staticmethod
     def get_image_ids(instances):
         image_ids = [instance.get('ImageId') for instance in instances if instance.get('ImageId') is not None]
-        return list(dict.fromkeys(image_ids))
+        return list(set(image_ids))
 
     @staticmethod
     def merge_ip_addresses(server_data):

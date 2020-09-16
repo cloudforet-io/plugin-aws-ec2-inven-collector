@@ -48,18 +48,31 @@ class CollectorManager(BaseManager):
         print(f'===== [{params["region_name"]}]  /  INSTANCE COUNT : {len(instances)}')
 
         if len(instances) > 0:
+            ins_manager: EC2InstanceManager = EC2InstanceManager(params, ec2_connector=ec2_connector)
+            asg_manager: AutoScalingGroupManager = AutoScalingGroupManager(params)
+            elb_manager: LoadBalancerManager = LoadBalancerManager(params, ec2_connector=ec2_connector)
+            disk_manager: DiskManager = DiskManager(params)
+            nic_manager: NICManager = NICManager(params)
+            vpc_manager: VPCManager = VPCManager(params)
+            sg_manager: SecurityGroupManager = SecurityGroupManager(params)
+            cw_manager: CloudWatchManager = CloudWatchManager(params)
+
+            meta_manager: MetadataManager = MetadataManager()
+
             # Instance Type
             itypes = ec2_connector.list_instance_types()
 
             # Image
             images = ec2_connector.list_images(ImageIds=self.get_image_ids(instances))
 
-            # Autoscaling group list
+            # Auto Scaling group list
             auto_scaling_groups = ec2_connector.list_auto_scaling_groups()
             launch_configurations = ec2_connector.list_launch_configurations()
 
             # LB list
             load_balancers = ec2_connector.list_load_balancers()
+            elb_manager.set_listeners_into_load_balancers(load_balancers)
+
             target_groups = ec2_connector.list_target_groups()
 
             for target_group in target_groups:
@@ -78,17 +91,6 @@ class CollectorManager(BaseManager):
 
             # Security Group
             sgs = ec2_connector.list_security_groups()
-
-            ins_manager: EC2InstanceManager = EC2InstanceManager(params, ec2_connector=ec2_connector)
-            asg_manager: AutoScalingGroupManager = AutoScalingGroupManager(params)
-            elb_manager: LoadBalancerManager = LoadBalancerManager(params, ec2_connector=ec2_connector)
-            disk_manager: DiskManager = DiskManager(params)
-            nic_manager: NICManager = NICManager(params)
-            vpc_manager: VPCManager = VPCManager(params)
-            sg_manager: SecurityGroupManager = SecurityGroupManager(params)
-            cw_manager: CloudWatchManager = CloudWatchManager(params)
-
-            meta_manager: MetadataManager = MetadataManager()
 
             for instance in instances:
                 instance_id = instance.get('InstanceId')
@@ -172,7 +174,7 @@ class CollectorManager(BaseManager):
     @staticmethod
     def get_image_ids(instances):
         image_ids = [instance.get('ImageId') for instance in instances if instance.get('ImageId') is not None]
-        return list(dict.fromkeys(image_ids))
+        return list(set(image_ids))
 
     @staticmethod
     def merge_ip_addresses(server_data):

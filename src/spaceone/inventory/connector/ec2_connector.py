@@ -1,17 +1,23 @@
 __all__ = ["EC2Connector"]
 
+import logging
 import boto3
 from boto3.session import Session
-import logging
+from botocore.config import Config
+
 from spaceone.core.error import *
 from spaceone.core import utils
 from spaceone.core.connector import BaseConnector
 
 _LOGGER = logging.getLogger(__name__)
 DEFAULT_REGION = 'us-east-1'
+RESOURCES = ['cloudformation', 'cloudwatch', 'dynamodb', 'ec2', 'glacier', 'iam', 'opsworks', 's3', 'sns', 'sqs']
+
 PAGINATOR_MAX_ITEMS = 10000
 PAGINATOR_PAGE_SIZE = 50
-RESOURCES = ['cloudformation', 'cloudwatch', 'dynamodb', 'ec2', 'glacier', 'iam', 'opsworks', 's3', 'sns', 'sqs']
+
+DEFAULT_API_RETRIES = 10
+
 
 class EC2Connector(BaseConnector):
 
@@ -27,8 +33,7 @@ class EC2Connector(BaseConnector):
 
     def set_connect(self, secret_data, region_name, service="ec2"):
         session = self.get_session(secret_data, region_name)
-        aws_conf = {}
-        aws_conf['region_name'] = region_name
+        aws_conf = {'region_name': region_name}
 
         if service in RESOURCES:
             resource = session.resource(service, **aws_conf)
@@ -65,10 +70,12 @@ class EC2Connector(BaseConnector):
         return session
 
     def set_client(self, secret_data, region_name):
+        config = Config(retries={'max_attempts': DEFAULT_API_RETRIES})
+
         self.session = self.get_session(secret_data, region_name)
-        self.ec2_client = self.session.client('ec2')
-        self.asg_client = self.session.client('autoscaling')
-        self.elbv2_client = self.session.client('elbv2')
+        self.ec2_client = self.session.client('ec2', config=config)
+        self.asg_client = self.session.client('autoscaling', config=config)
+        self.elbv2_client = self.session.client('elbv2', config=config)
 
     def list_regions(self, **query):
         query = self._generate_query(is_paginate=False, **query)
@@ -107,7 +114,7 @@ class EC2Connector(BaseConnector):
 
     def list_instance_attribute(self, instance_id, **query):
         response = self.ec2_client.describe_instance_attribute(Attribute='disableApiTermination',
-                                                                 InstanceId=instance_id, **query)
+                                                               InstanceId=instance_id, **query)
 
         attribute = response.get('DisableApiTermination', {'Value': False})
         return attribute.get('Value')
@@ -167,8 +174,8 @@ class EC2Connector(BaseConnector):
             target_groups.extend(data.get('TargetGroups', []))
 
         return target_groups
-    ####
-    def list_listners(self, load_balancer_arn, **query):
+
+    def list_listeners(self, load_balancer_arn, **query):
         response = self.elbv2_client.describe_listeners(LoadBalancerArn=load_balancer_arn, **query)
         return response.get('Listeners', [])
 
@@ -267,3 +274,4 @@ class EC2Connector(BaseConnector):
             })
 
         return query
+

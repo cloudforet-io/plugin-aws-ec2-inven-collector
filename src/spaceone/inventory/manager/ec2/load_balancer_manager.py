@@ -5,14 +5,14 @@ from spaceone.inventory.connector.ec2_connector import EC2Connector
 
 class LoadBalancerManager(BaseManager):
 
-    def __init__(self, params, ec2_connector=None):
+    def __init__(self, params, ec2_connector=None, **kwargs):
         self.params = params
         self.ec2_connector: EC2Connector = ec2_connector
 
     def get_load_balancer_info(self, load_balancers, target_groups, instance_id=None, instance_ip=None):
         '''
         load_balancer_data_list = [{
-                "dns": "",
+                "endpoint": "",
                 "type": "network" | "application"
                 "arn": "",
                 "scheme": 'internet-facing'|'internal,
@@ -23,7 +23,9 @@ class LoadBalancerManager(BaseManager):
                 "protocol": [
                     "TCP"
                 ],
-                 "tags": {},
+                 "tags": {
+                    "arn": ""
+                 },
             },
             ...
         ]
@@ -34,13 +36,15 @@ class LoadBalancerManager(BaseManager):
 
         for match_load_balancer in match_load_balancers:
             load_balancer_data = {
-                'dns': match_load_balancer.get('DNSName', ''),
+                'endpoint': match_load_balancer.get('DNSName', ''),
                 'type': match_load_balancer.get('Type'),
-                'arn': match_load_balancer.get('LoadBalancerArn'),
                 'scheme': match_load_balancer.get('Scheme'),
                 'name': match_load_balancer.get('LoadBalancerName', ''),
                 'protocol': [listener.get('Protocol') for listener in match_load_balancer.get('listeners', []) if listener.get('Protocol') is not None],
                 'port': [listener.get('Port') for listener in match_load_balancer.get('listeners', []) if listener.get('Port') is not None],
+                'tags': {
+                    'arn': match_load_balancer.get('LoadBalancerArn'),
+                }
             }
 
             load_balancer_data_list.append(LoadBalancer(load_balancer_data, strict=False))
@@ -60,21 +64,13 @@ class LoadBalancerManager(BaseManager):
 
         return match_load_balancers
 
-    def match_load_balancers(self, load_balancers, lb_arns):
-        match_load_balancers = []
-
-        for lb_arn in lb_arns:
-            for lb in load_balancers:
-                if lb.get('LoadBalancerArn') == lb_arn:
-                    lb.update({
-                        'listeners': self.get_listeners(lb_arn)
-                    })
-                    match_load_balancers.append(lb)
-
-        return match_load_balancers
-
-    def get_listeners(self, lb_arn):
-        return self.ec2_connector.list_listners(lb_arn)
+    def set_listeners_into_load_balancers(self, load_balancers):
+        for lb in load_balancers:
+            lb_arn = lb.get('LoadBalancerArn', '')
+            listeners = self.ec2_connector.list_listeners(lb_arn)
+            lb.update({
+                'listeners': listeners
+            })
 
     @staticmethod
     def match_target_groups(target_groups, instance_id, instance_ip):
@@ -95,3 +91,15 @@ class LoadBalancerManager(BaseManager):
                         match_target_groups.append(target_group)
 
         return match_target_groups
+
+    @staticmethod
+    def match_load_balancers(load_balancers, lb_arns):
+        match_load_balancers = []
+
+        for lb_arn in lb_arns:
+            for lb in load_balancers:
+                if lb.get('LoadBalancerArn') == lb_arn:
+                    match_load_balancers.append(lb)
+
+        return match_load_balancers
+

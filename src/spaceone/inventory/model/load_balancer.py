@@ -1,8 +1,10 @@
 from schematics import Model
 from schematics.types import StringType, IntType, DictType, ListType, ModelType
 
+
 class LoadBalancerTags(Model):
     arn = StringType()
+
 
 class LoadBalancer(Model):
     type = StringType(choices=('application', 'network'))

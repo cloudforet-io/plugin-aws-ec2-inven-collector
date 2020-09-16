@@ -1,1 +1,1 @@
-name = 'identity'
+name = 'inventory'

@@ -60,6 +60,8 @@ class CollectorManager(BaseManager):
 
             # LB list
             load_balancers = ec2_connector.list_load_balancers()
+            self.set_listeners_into_load_balancers(load_balancers, ec2_connector)
+
             target_groups = ec2_connector.list_target_groups()
 
             for target_group in target_groups:
@@ -81,7 +83,7 @@ class CollectorManager(BaseManager):
 
             ins_manager: EC2InstanceManager = EC2InstanceManager(params, ec2_connector=ec2_connector)
             asg_manager: AutoScalingGroupManager = AutoScalingGroupManager(params)
-            elb_manager: LoadBalancerManager = LoadBalancerManager(params, ec2_connector=ec2_connector)
+            elb_manager: LoadBalancerManager = LoadBalancerManager(params)
             disk_manager: DiskManager = DiskManager(params)
             nic_manager: NICManager = NICManager(params)
             vpc_manager: VPCManager = VPCManager(params)
@@ -163,6 +165,15 @@ class CollectorManager(BaseManager):
         except Exception as e:
             print(f'[ERROR: {params["region_name"]}] : {e}')
             raise e
+
+    @staticmethod
+    def set_listeners_into_load_balancers(load_balancers, ec2_connector):
+        for lb in load_balancers:
+            lb_arn = lb.get('LoadBalancerArn', '')
+            listeners = ec2_connector.list_listeners(lb_arn)
+            lb.update({
+                'listeners': listeners
+            })
 
     @staticmethod
     def get_volume_ids(instance):

@@ -167,8 +167,8 @@ class EC2Connector(BaseConnector):
             target_groups.extend(data.get('TargetGroups', []))
 
         return target_groups
-    ####
-    def list_listners(self, load_balancer_arn, **query):
+
+    def list_listeners(self, load_balancer_arn, **query):
         response = self.elbv2_client.describe_listeners(LoadBalancerArn=load_balancer_arn, **query)
         return response.get('Listeners', [])
 

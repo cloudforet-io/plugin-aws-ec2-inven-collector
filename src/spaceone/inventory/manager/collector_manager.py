@@ -162,7 +162,7 @@ class CollectorManager(BaseManager):
 
         except Exception as e:
             print(f'[ERROR: {params["region_name"]}] : {e}')
-            return []
+            raise e
 
     @staticmethod
     def get_volume_ids(instance):

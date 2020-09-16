@@ -1,13 +1,11 @@
 from spaceone.core.manager import BaseManager
 from spaceone.inventory.model.load_balancer import LoadBalancer
-from spaceone.inventory.connector.ec2_connector import EC2Connector
 
 
 class LoadBalancerManager(BaseManager):
 
-    def __init__(self, params, ec2_connector=None):
+    def __init__(self, params):
         self.params = params
-        self.ec2_connector: EC2Connector = ec2_connector
 
     def get_load_balancer_info(self, load_balancers, target_groups, instance_id=None, instance_ip=None):
         '''
@@ -66,15 +64,9 @@ class LoadBalancerManager(BaseManager):
         for lb_arn in lb_arns:
             for lb in load_balancers:
                 if lb.get('LoadBalancerArn') == lb_arn:
-                    lb.update({
-                        'listeners': self.get_listeners(lb_arn)
-                    })
                     match_load_balancers.append(lb)
 
         return match_load_balancers
-
-    def get_listeners(self, lb_arn):
-        return self.ec2_connector.list_listners(lb_arn)
 
     @staticmethod
     def match_target_groups(target_groups, instance_id, instance_ip):

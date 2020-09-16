@@ -171,7 +171,6 @@ class CollectorManager(BaseManager):
 
     @staticmethod
     def get_image_ids(instances):
-        #try catch
         return [instance.get('ImageId') for instance in instances if instance.get('ImageId') is not None]
 
     @staticmethod

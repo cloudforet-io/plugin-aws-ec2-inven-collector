@@ -162,7 +162,7 @@ class CollectorManager(BaseManager):
 
         except Exception as e:
             print(f'[ERROR: {params["region_name"]}] : {e}')
-            return []
+            raise e
 
     @staticmethod
     def get_volume_ids(instance):
@@ -171,6 +171,7 @@ class CollectorManager(BaseManager):
 
     @staticmethod
     def get_image_ids(instances):
+        #try catch
         return [instance.get('ImageId') for instance in instances if instance.get('ImageId') is not None]
 
     @staticmethod

@@ -113,7 +113,7 @@ elb = TableDynamicLayout.set_fields('ELB', root_path='data.load_balancer', field
         'resource_type': 'inventory.CloudService',
         'reference_key': 'data.load_balancer_name'
     }),
-    TextDyField.data_source('DNS', 'dns', reference={
+    TextDyField.data_source('Endpoint', 'endpoint', reference={
         'resource_type': 'inventory.CloudService',
         'reference_key': 'data.dns_name'
     }),

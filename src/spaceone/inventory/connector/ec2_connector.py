@@ -88,7 +88,7 @@ class EC2Connector(BaseConnector):
         query.update({'Filters':
                       [
                         {'Name': 'instance-state-name',
-                         'Values': ['running', 'shutting-down', 'stopping', 'stopped']
+                         'Values': ['pending', 'running', 'shutting-down', 'stopping', 'stopped']
                          }
                       ]})
         paginator = self.ec2_client.get_paginator('describe_instances')

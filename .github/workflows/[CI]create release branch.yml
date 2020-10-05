@@ -1,8 +1,5 @@
 name: "[CI]create branch"
 on:
-  push:
-    branches:
-      - "initial_debuging"
   workflow_dispatch:
     inputs:
       tag:

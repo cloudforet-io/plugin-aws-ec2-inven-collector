@@ -168,7 +168,12 @@ class CollectorManager(BaseManager):
 
     @staticmethod
     def list_cloud_service_types():
-        return [CloudServiceType()]
+        cloud_service_type = {
+            'tags': {
+                'spaceone:icon': 'https://spaceone-custom-assets.s3.ap-northeast-2.amazonaws.com/console-assets/icons/aws-ec2.svg',
+            }
+        }
+        return [CloudServiceType(cloud_service_type, strict=False)]
 
     @staticmethod
     def get_volume_ids(instance):

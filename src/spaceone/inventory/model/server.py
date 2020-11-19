@@ -28,7 +28,6 @@ class ServerData(Model):
 class Server(Model):
     name = StringType()
     region_code = StringType()
-    region_type = StringType(default='AWS')
     data = ModelType(ServerData)
     nics = ListType(ModelType(NIC))
     disks = ListType(ModelType(Disk))
@@ -37,6 +36,7 @@ class Server(Model):
     server_type = StringType(default='VM')
     os_type = StringType(choices=('LINUX', 'WINDOWS'))
     provider = StringType(default='aws')
+    cloud_service_type = StringType(default='Instance')
+    cloud_service_group = StringType(default='EC2')
     _metadata = ModelType(ServerMetadata, serialized_name='metadata')
     reference = ModelType(ReferenceModel)
-

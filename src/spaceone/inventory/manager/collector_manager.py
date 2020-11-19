@@ -9,6 +9,7 @@ from spaceone.inventory.manager.ec2 import EC2InstanceManager, AutoScalingGroupM
 from spaceone.inventory.manager.metadata.metadata_manager import MetadataManager
 from spaceone.inventory.model.server import Server, ReferenceModel
 from spaceone.inventory.model.region import Region
+from spaceone.inventory.model.cloud_service_type import CloudServiceType
 
 
 _LOGGER = logging.getLogger(__name__)
@@ -165,6 +166,10 @@ class CollectorManager(BaseManager):
         except Exception as e:
             print(f'[ERROR: {params["region_name"]}] : {e}')
             raise e
+
+    @staticmethod
+    def list_cloud_service_types():
+        return [CloudServiceType()]
 
     @staticmethod
     def get_volume_ids(instance):

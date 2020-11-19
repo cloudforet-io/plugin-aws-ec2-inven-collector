@@ -15,4 +15,9 @@ from spaceone.inventory.model.cloudwatch import CloudWatch
 from spaceone.inventory.model.metadata.metadata import *
 from spaceone.inventory.model.metadata.metadata_dynamic_field import *
 
+# Cloud Service Type
+from spaceone.inventory.model.cloud_service_type import *
+
+# Last Import because circular import error
 from spaceone.inventory.model.server import Server, ServerData
+

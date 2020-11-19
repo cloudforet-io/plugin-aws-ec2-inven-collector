@@ -62,7 +62,7 @@ FILTER_FORMAT = [
     }
 ]
 
-SUPPORTED_RESOURCE_TYPE = ['inventory.Server', 'inventory.Region']
+SUPPORTED_RESOURCE_TYPE = ['inventory.Server', 'inventory.Region', 'inventory.CloudServiceType']
 NUMBER_OF_CONCURRENT = 20
 
 
@@ -78,8 +78,8 @@ class CollectorService(BaseService):
         """ init plugin by options
         """
         capability = {
-            'filter_format':FILTER_FORMAT,
-            'supported_resource_type' : SUPPORTED_RESOURCE_TYPE
+            'filter_format': FILTER_FORMAT,
+            'supported_resource_type': SUPPORTED_RESOURCE_TYPE
             }
         return {'metadata': capability}
 
@@ -127,6 +127,11 @@ class CollectorService(BaseService):
                                   'match_rules': {'1': ['reference.resource_id']}}
         region_resource_format = {'resource_type': 'inventory.Region',
                                   'match_rules': {'1': ['region_code', 'region_type']}}
+        cloud_service_type_resource_format = {'resource_type': 'inventory.CloudServiceType',
+                                              'match_rules': {'1': ['name', 'group', 'provider']}}
+
+        for cloud_service_type in self.collector_manager.list_cloud_service_types():
+            yield cloud_service_type, cloud_service_type_resource_format
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=NUMBER_OF_CONCURRENT) as executor:
             future_executors = []
@@ -166,7 +171,26 @@ class CollectorService(BaseService):
 
         return params_for_regions
 
-    def _check_query(self, query):
+    def get_all_regions(self, secret_data, filter_region_name):
+        """ Find all region name
+        Args:
+            secret_data: secret data
+            region_name (list): list of region_name if wanted
+
+        Returns: list of region name
+        """
+
+        if 'region_name' in secret_data:
+            return [secret_data['region_name']]
+
+        if filter_region_name:
+            return filter_region_name
+
+        regions = self.collector_manager.list_regions(secret_data, DEFAULT_REGION)
+        return [region.get('RegionName') for region in regions if region.get('RegionName')]
+
+    @staticmethod
+    def _check_query(query):
         """
         Args:
             query (dict): example
@@ -189,28 +213,10 @@ class CollectorService(BaseService):
                 region_name.extend(value)
 
             else:
-                if isinstance(value, list) == False:
+                if not isinstance(value, list):
                     value = [value]
 
-                if len(value) > 0:
+                if len(value):
                     filters.append({'Name': key, 'Values': value})
 
-        return (filters, instance_ids, region_name)
-
-    def get_all_regions(self, secret_data, filter_region_name):
-        """ Find all region name
-        Args:
-            secret_data: secret data
-            region_name (list): list of region_name if wanted
-
-        Returns: list of region name
-        """
-
-        if 'region_name' in secret_data:
-            return [secret_data['region_name']]
-
-        if len(filter_region_name) > 0:
-            return filter_region_name
-
-        regions = self.collector_manager.list_regions(secret_data, DEFAULT_REGION)
-        return [region.get('RegionName') for region in regions if region.get('RegionName') is not None]
+        return filters, instance_ids, region_name

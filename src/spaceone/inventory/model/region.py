@@ -4,6 +4,6 @@ from schematics.types import StringType, DictType
 
 class Region(Model):
     region_code = StringType()
-    region_type = StringType(default='AWS')
+    provider = StringType(default='aws')
     name = StringType(default='')
     tags = DictType(StringType, serialize_when_none=False)

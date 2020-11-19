@@ -119,7 +119,8 @@ class CollectorManager(BaseManager):
                     'nics': nic_vos,
                     'disks': disk_vos,
                     'region_code': params.get("region_name", ''),
-                    'region_type': 'AWS'
+                    'cloud_service_group': 'EC2',
+                    'cloud_service_type': 'Instance'
                 })
 
                 server_data['data'].update({

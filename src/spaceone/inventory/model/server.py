@@ -36,6 +36,7 @@ class Server(Model):
     server_type = StringType(default='VM')
     os_type = StringType(choices=('LINUX', 'WINDOWS'))
     provider = StringType(default='aws')
+    cloud_service_type = StringType(default='Instance')
+    cloud_service_group = StringType(default='EC2')
     _metadata = ModelType(ServerMetadata, serialized_name='metadata')
     reference = ModelType(ReferenceModel)
-

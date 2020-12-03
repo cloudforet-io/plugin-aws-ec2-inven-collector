@@ -3,8 +3,8 @@ from schematics.types import ModelType, StringType, BooleanType, ListType
 
 
 class Tags(Model):
-    Key = StringType()
-    Value = StringType()
+    key = StringType(deserialize_from='Key')
+    value = StringType(deserialize_from='Value')
 
 
 class AWSIAMInstanceProfile(Model):

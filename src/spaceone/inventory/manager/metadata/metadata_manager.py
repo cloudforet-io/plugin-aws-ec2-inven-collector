@@ -78,7 +78,7 @@ disk = TableDynamicLayout.set_fields('Disk', root_path='disks', fields=[
     TextDyField.data_source('Size(GiB)', 'size'),
     TextDyField.data_source('Volume ID', 'tags.volume_id'),
     EnumDyField.data_source('Volume Type', 'tags.volume_type',
-                            default_outline_badge=['gp2', 'io1', 'sc1', 'st1', 'standard']),
+                            default_outline_badge=['gp2', 'gp3', 'io1', 'sc1', 'st1', 'standard']),
     TextDyField.data_source('IOPS', 'tags.iops'),
     EnumDyField.data_source('Encrypted', 'tags.encrypted', default_badge={
         'indigo.500': ['true'], 'coral.600': ['false']

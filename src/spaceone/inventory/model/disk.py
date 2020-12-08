@@ -4,7 +4,8 @@ from schematics.types import StringType, IntType, BooleanType, ModelType, FloatT
 
 class DiskTags(Model):
     volume_id = StringType(serialize_when_none=False)
-    volume_type = StringType(choices=('standard', 'io1', 'gp2', 'sc1', 'st1'), serialize_when_none=False)
+    volume_type = StringType(choices=('standard', 'io1', 'gp2', 'gp3', 'sc1', 'st1'),
+                             serialize_when_none=False)
     encrypted = BooleanType(serialize_when_none=False)
     iops = IntType(serialize_when_none=False)
 

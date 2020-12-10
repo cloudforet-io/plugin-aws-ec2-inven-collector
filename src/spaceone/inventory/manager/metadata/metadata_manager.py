@@ -128,8 +128,8 @@ elb = TableDynamicLayout.set_fields('ELB', root_path='data.load_balancer', field
 ])
 
 tags = TableDynamicLayout.set_fields('AWS Tags', root_path='data.aws.tags', fields=[
-    TextDyField.data_source('Key', 'Key'),
-    TextDyField.data_source('Value', 'Value'),
+    TextDyField.data_source('Key', 'key'),
+    TextDyField.data_source('Value', 'value'),
 ])
 
 metadata = ServerMetadata.set_layouts([ec2, tags, disk, nic, security_group, elb])

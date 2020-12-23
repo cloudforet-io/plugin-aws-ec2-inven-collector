@@ -75,7 +75,7 @@ ec2 = ListDynamicLayout.set_layouts('AWS EC2', layouts=[ec2_instance, ec2_vpc, e
 disk = TableDynamicLayout.set_fields('Disk', root_path='disks', fields=[
     TextDyField.data_source('Index', 'device_index'),
     TextDyField.data_source('Name', 'device'),
-    SizeField.data_source('Size(GiB)', 'size', options={
+    SizeField.data_source('Size(GB)', 'size', options={
         'display_unit': 'GB',
         'source_unit': 'GB'
     }),

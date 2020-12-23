@@ -3,7 +3,7 @@ from spaceone.inventory.model.metadata.metadata import ServerMetadata
 from spaceone.inventory.model.metadata.metadata_dynamic_layout import ItemDynamicLayout, TableDynamicLayout, \
     ListDynamicLayout
 from spaceone.inventory.model.metadata.metadata_dynamic_field import TextDyField, EnumDyField, ListDyField, \
-    DateTimeDyField
+    DateTimeDyField, SizeField
 
 ec2_instance = ItemDynamicLayout.set_fields('EC2 Instance', fields=[
     TextDyField.data_source('Instance ID', 'data.compute.instance_id'),
@@ -75,7 +75,10 @@ ec2 = ListDynamicLayout.set_layouts('AWS EC2', layouts=[ec2_instance, ec2_vpc, e
 disk = TableDynamicLayout.set_fields('Disk', root_path='disks', fields=[
     TextDyField.data_source('Index', 'device_index'),
     TextDyField.data_source('Name', 'device'),
-    TextDyField.data_source('Size(GiB)', 'size'),
+    SizeField.data_source('Size(GiB)', 'size', options={
+        'display_unit': 'GB',
+        'source_unit': 'GB'
+    }),
     TextDyField.data_source('Volume ID', 'tags.volume_id'),
     EnumDyField.data_source('Volume Type', 'tags.volume_type',
                             default_outline_badge=['gp2', 'gp3', 'io1', 'sc1', 'st1', 'standard']),

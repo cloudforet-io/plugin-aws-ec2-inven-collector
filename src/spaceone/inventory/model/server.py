@@ -12,6 +12,11 @@ class ReferenceModel(Model):
     external_link = StringType(required=False, serialize_when_none=False)
 
 
+class Tags(Model):
+    key = StringType(deserialize_from="Key")
+    value = StringType(deserialize_from="Value")
+
+
 class ServerData(Model):
     os = ModelType(OS)
     aws = ModelType(AWS)
@@ -29,6 +34,7 @@ class Server(Model):
     name = StringType()
     region_code = StringType()
     data = ModelType(ServerData)
+    tags = ListType(ModelType(Tags))
     nics = ListType(ModelType(NIC))
     disks = ListType(ModelType(Disk))
     primary_ip_address = StringType(default='')

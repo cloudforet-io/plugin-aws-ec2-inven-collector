@@ -119,6 +119,7 @@ class CollectorManager(BaseManager):
                     'nics': nic_vos,
                     'disks': disk_vos,
                     'region_code': params.get("region_name", ''),
+                    'tags': instance.get('Tags', [])
                 })
 
                 server_data['data'].update({

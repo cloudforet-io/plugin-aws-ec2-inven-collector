@@ -201,7 +201,7 @@ class CollectorService(BaseService):
                       'instance_type': 'm4.xlarge',
                       'region_name': ['aaaa']
                   }
-        If there is regiona_name in query, this indicates searching only these regions
+        If there is region_name in query, this indicates searching only these regions
         """
 
         instance_ids = []

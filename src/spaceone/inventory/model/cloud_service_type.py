@@ -10,4 +10,5 @@ class CloudServiceType(Model):
     tags = DictType(StringType, serialize_when_none=False)
     is_primary = BooleanType(default=True)
     is_major = BooleanType(default=True)
+    service_code = StringType(default='AmazonEC2')
     resource_type = StringType(default='inventory.Server')

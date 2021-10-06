@@ -42,7 +42,7 @@ class TestCollector(TestCase):
         options = {}
         secret_data = {
             'aws_access_key_id': AKI,
-            'aws_secret_access_key': SAK,
+            'aws_secret_access_key': SAK
         }
         filter = {}
         resource_stream = self.inventory.Collector.collect({'options': options, 'secret_data': secret_data,

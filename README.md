@@ -11,6 +11,9 @@ Plugin for collecting AWS EC2
 
 # Release Note
 
+## Version 1.12.1
+Remove region filter in secret_data. It is not used.
+
 ## Version 1.3.1
 Support collect Large Capacity of EC2s (More than 2k) 
 * Handling API 'rate exceeded'

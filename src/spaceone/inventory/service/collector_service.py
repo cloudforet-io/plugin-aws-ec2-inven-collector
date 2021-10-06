@@ -182,13 +182,14 @@ class CollectorService(BaseService):
         """ Find all region name
         Args:
             secret_data: secret data
-            region_name (list): list of region_name if wanted
+            filter_region_name (list): list of region_name if wanted
 
         Returns: list of region name
         """
 
-        if 'region_name' in secret_data:
-            return [secret_data['region_name']]
+        # Remove region filter in secret_data
+        # if 'region_name' in secret_data:
+        #     return [secret_data['region_name']]
 
         if filter_region_name:
             return filter_region_name
@@ -215,10 +216,8 @@ class CollectorService(BaseService):
         for key, value in query.items():
             if key == 'instance_id' and isinstance(value, list):
                 instance_ids = value
-
             elif key == 'region_name' and isinstance(value, list):
                 region_name.extend(value)
-
             else:
                 if not isinstance(value, list):
                     value = [value]

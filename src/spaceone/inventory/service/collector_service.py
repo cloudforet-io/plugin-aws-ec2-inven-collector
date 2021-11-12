@@ -1,10 +1,12 @@
-# -*- coding: utf-8 -*-
+import json
 import time
 import logging
 import concurrent.futures
 
 from spaceone.core.service import *
 from spaceone.inventory.manager.collector_manager import CollectorManager
+from spaceone.inventory.model.resource import CloudServiceTypeResourceResponse, ServerResourceResponse, \
+    RegionResourceResponse, ErrorResourceResponse
 
 _LOGGER = logging.getLogger(__name__)
 DEFAULT_REGION = 'us-east-1'
@@ -109,7 +111,7 @@ class CollectorService(BaseService):
         return {}
 
     @transaction
-    @check_required(['options','secret_data', 'filter'])
+    @check_required(['options', 'secret_data', 'filter'])
     def list_resources(self, params):
         """ Get quick list of resources
         Args:
@@ -127,15 +129,8 @@ class CollectorService(BaseService):
         resource_regions = []
         collected_region_code = []
 
-        server_resource_format = {'resource_type': 'inventory.Server',
-                                  'match_rules': {'1': ['reference.resource_id']}}
-        region_resource_format = {'resource_type': 'inventory.Region',
-                                  'match_rules': {'1': ['region_code', 'provider']}}
-        cloud_service_type_resource_format = {'resource_type': 'inventory.CloudServiceType',
-                                              'match_rules': {'1': ['name', 'group', 'provider']}}
-
         for cloud_service_type in self.collector_manager.list_cloud_service_types():
-            yield cloud_service_type, cloud_service_type_resource_format
+            yield CloudServiceTypeResourceResponse({'resource': cloud_service_type})
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=NUMBER_OF_CONCURRENT) as executor:
             future_executors = []
@@ -143,22 +138,32 @@ class CollectorService(BaseService):
                 future_executors.append(executor.submit(self.collector_manager.list_resources, mp_param))
 
             for future in concurrent.futures.as_completed(future_executors):
-                try:
-                    for result in future.result():
-                        collected_region = self.collector_manager.get_region_from_result(result)
+                for result in future.result():
+                    if result.resource_type == 'inventory.Server':
+                        try:
+                            collected_region = self.collector_manager.get_region_from_result(result.resource)
 
-                        if collected_region is not None and collected_region.region_code not in collected_region_code:
-                            resource_regions.append(collected_region)
-                            collected_region_code.append(collected_region.region_code)
+                            if collected_region is not None and collected_region.region_code not in collected_region_code:
+                                resource_regions.append(collected_region)
+                                collected_region_code.append(collected_region.region_code)
+                        except Exception as e:
+                            _LOGGER.error(f'[list_resources] {e}')
 
-                        yield result, server_resource_format
-                except Exception as e:
-                    _LOGGER.error(f'failed to result {e}')
+                            if type(e) is dict:
+                                error_resource_response = ErrorResourceResponse(
+                                    {'message': json.dumps(e), 'resource': {'resource_type': 'inventory.Region'}})
+                            else:
+                                error_resource_response = ErrorResourceResponse(
+                                    {'message': str(e), 'resource': {'resource_type': 'inventory.Region'}})
+
+                            yield error_resource_response
+
+                    yield result
 
         for resource_region in resource_regions:
-            yield resource_region, region_resource_format
+            yield RegionResourceResponse(resource_region)
 
-        print(f'############## TOTAL FINISHED {time.time() - start_time} Sec ##################')
+        _LOGGER.debug(f'[list_resources] TOTAL FINISHED {time.time() - start_time} Sec')
 
     def set_params_for_regions(self, params):
         params_for_regions = []

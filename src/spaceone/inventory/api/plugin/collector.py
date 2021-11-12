@@ -28,5 +28,5 @@ class Collector(BaseAPI, collector_pb2_grpc.CollectorServicer):
         params, metadata = self.parse_request(request, context)
 
         with self.locator.get_service('CollectorService', metadata) as collector_svc:
-            for resource in collector_svc.list_resources(params):
+            for resource in collector_svc.collect(params):
                 yield self.locator.get_info('ResourceInfo', resource.to_primitive())

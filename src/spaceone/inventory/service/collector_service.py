@@ -112,7 +112,7 @@ class CollectorService(BaseService):
 
     @transaction
     @check_required(['options', 'secret_data', 'filter'])
-    def list_resources(self, params):
+    def collect(self, params):
         """ Get quick list of resources
         Args:
             params:
@@ -147,7 +147,7 @@ class CollectorService(BaseService):
                                 resource_regions.append(collected_region)
                                 collected_region_code.append(collected_region.region_code)
                         except Exception as e:
-                            _LOGGER.error(f'[list_resources] {e}')
+                            _LOGGER.error(f'[collect] {e}')
 
                             if type(e) is dict:
                                 error_resource_response = ErrorResourceResponse(
@@ -163,7 +163,7 @@ class CollectorService(BaseService):
         for resource_region in resource_regions:
             yield RegionResourceResponse(resource_region)
 
-        _LOGGER.debug(f'[list_resources] TOTAL FINISHED {time.time() - start_time} Sec')
+        _LOGGER.debug(f'[collect] TOTAL FINISHED {time.time() - start_time} Sec')
 
     def set_params_for_regions(self, params):
         params_for_regions = []

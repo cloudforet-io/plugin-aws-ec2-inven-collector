@@ -1,6 +1,7 @@
 __all__ = ['CollectorManager']
 
 import time
+import json
 import logging
 from spaceone.core.manager import BaseManager
 from spaceone.inventory.connector import EC2Connector
@@ -10,6 +11,7 @@ from spaceone.inventory.manager.metadata.metadata_manager import MetadataManager
 from spaceone.inventory.model.server import Server, ReferenceModel
 from spaceone.inventory.model.region import Region
 from spaceone.inventory.model.cloud_service_type import CloudServiceType
+from spaceone.inventory.model.resource import ErrorResourceResponse, ServerResourceResponse
 
 
 _LOGGER = logging.getLogger(__name__)
@@ -35,7 +37,9 @@ class CollectorManager(BaseManager):
         return ec2_connector.list_regions()
 
     def list_instances(self, params):
-        server_vos = []
+        servers = []
+        errors = []
+
         ec2_connector: EC2Connector = self.locator.get_connector('EC2Connector')
         ec2_connector.set_client(params['secret_data'], params['region_name'])
 
@@ -46,7 +50,7 @@ class CollectorManager(BaseManager):
 
         instances, account_id = ec2_connector.list_instances(**instance_filter)
 
-        print(f'===== [{params["region_name"]}]  /  INSTANCE COUNT : {len(instances)}')
+        _LOGGER.debug(f'[list_instances] [{params["region_name"]}] INSTANCE COUNT : {len(instances)}')
 
         if len(instances) > 0:
             ins_manager: EC2InstanceManager = EC2InstanceManager(params, ec2_connector=ec2_connector)
@@ -94,78 +98,102 @@ class CollectorManager(BaseManager):
             sgs = ec2_connector.list_security_groups()
 
             for instance in instances:
-                instance_id = instance.get('InstanceId')
-                instance_ip = instance.get('PrivateIpAddress')
+                try:
+                    instance_id = instance.get('InstanceId')
+                    instance_ip = instance.get('PrivateIpAddress')
 
-                server_data = ins_manager.get_server_info(instance, itypes, images)
-                auto_scaling_group_vo = asg_manager.get_auto_scaling_info(instance_id, auto_scaling_groups,
-                                                                          launch_configurations)
+                    server_data = ins_manager.get_server_info(instance, itypes, images)
+                    auto_scaling_group_vo = asg_manager.get_auto_scaling_info(instance_id, auto_scaling_groups,
+                                                                              launch_configurations)
 
-                load_balancer_vos = elb_manager.get_load_balancer_info(load_balancers, target_groups,
-                                                                       instance_id, instance_ip)
+                    load_balancer_vos = elb_manager.get_load_balancer_info(load_balancers, target_groups,
+                                                                           instance_id, instance_ip)
 
-                disk_vos = disk_manager.get_disk_info(self.get_volume_ids(instance), volumes)
-                vpc_vo, subnet_vo = vpc_manager.get_vpc_info(instance.get('VpcId'), instance.get('SubnetId'),
-                                                             vpcs, subnets, params['region_name'])
+                    disk_vos = disk_manager.get_disk_info(self.get_volume_ids(instance), volumes)
+                    vpc_vo, subnet_vo = vpc_manager.get_vpc_info(instance.get('VpcId'), instance.get('SubnetId'),
+                                                                 vpcs, subnets, params['region_name'])
 
-                nic_vos = nic_manager.get_nic_info(instance.get('NetworkInterfaces'), subnet_vo)
+                    nic_vos = nic_manager.get_nic_info(instance.get('NetworkInterfaces'), subnet_vo)
 
-                sg_ids = [security_group.get('GroupId') for security_group in instance.get('SecurityGroups', []) if
-                          security_group.get('GroupId') is not None]
-                sg_rules_vos = sg_manager.get_security_group_info(sg_ids, sgs)
-                cloudwatch_vo = cw_manager.get_cloudwatch_info(instance_id, params['region_name'])
+                    sg_ids = [security_group.get('GroupId') for security_group in instance.get('SecurityGroups', []) if
+                              security_group.get('GroupId') is not None]
+                    sg_rules_vos = sg_manager.get_security_group_info(sg_ids, sgs)
+                    cloudwatch_vo = cw_manager.get_cloudwatch_info(instance_id, params['region_name'])
 
-                server_data.update({
-                    'nics': nic_vos,
-                    'disks': disk_vos,
-                    'region_code': params.get("region_name", ''),
-                    'tags': instance.get('Tags', [])
-                })
+                    server_data.update({
+                        'nics': nic_vos,
+                        'disks': disk_vos,
+                        'region_code': params.get("region_name", ''),
+                        'tags': instance.get('Tags', [])
+                    })
 
-                server_data['data'].update({
-                    'load_balancer': load_balancer_vos,
-                    'security_group': sg_rules_vos,
-                    'vpc': vpc_vo,
-                    'subnet': subnet_vo,
-                    'cloudwatch': cloudwatch_vo
-                })
-
-                if auto_scaling_group_vo:
                     server_data['data'].update({
-                        'auto_scaling_group': auto_scaling_group_vo
+                        'load_balancer': load_balancer_vos,
+                        'security_group': sg_rules_vos,
+                        'vpc': vpc_vo,
+                        'subnet': subnet_vo,
+                        'cloudwatch': cloudwatch_vo
                     })
 
-                # IP addr : ip_addresses = nics.ip_addresses + data.public_ip_address
-                server_data.update({
-                    'ip_addresses': self.merge_ip_addresses(server_data),
-                    'primary_ip_address': instance_ip
-                })
+                    if auto_scaling_group_vo:
+                        server_data['data'].update({
+                            'auto_scaling_group': auto_scaling_group_vo
+                        })
 
-                server_data['data']['compute']['account'] = account_id
-
-                server_data.update({
-                    '_metadata': meta_manager.get_metadata(),
-                    'reference': ReferenceModel({
-                        'resource_id': server_data['data']['compute']['instance_id'],
-                        'external_link': f"https://{params.get('region_name')}.console.aws.amazon.com/ec2/v2/home?region={params.get('region_name')}#Instances:instanceId={server_data['data']['compute']['instance_id']}"
+                    # IP addr : ip_addresses = nics.ip_addresses + data.public_ip_address
+                    server_data.update({
+                        'ip_addresses': self.merge_ip_addresses(server_data),
+                        'primary_ip_address': instance_ip
                     })
-                })
 
-                server_vos.append(Server(server_data, strict=False))
+                    server_data['data']['compute']['account'] = account_id
 
-        return server_vos
+                    server_data.update({
+                        '_metadata': meta_manager.get_metadata(),
+                        'reference': ReferenceModel({
+                            'resource_id': server_data['data']['compute']['instance_id'],
+                            'external_link': f"https://{params.get('region_name')}.console.aws.amazon.com/ec2/v2/home?region={params.get('region_name')}#Instances:instanceId={server_data['data']['compute']['instance_id']}"
+                        })
+                    })
+
+                    server_resource = Server(server_data, strict=False)
+                    servers.append(ServerResourceResponse({'resource': server_resource}))
+
+                except Exception as e:
+                    _LOGGER.error(f'[list_instances] [{instance.get("InstanceId")}] {e}')
+
+                    if type(e) is dict:
+                        error_resource_response = ErrorResourceResponse({'message': json.dumps(e)})
+                    else:
+                        error_resource_response = ErrorResourceResponse(
+                            {'message': str(e), 'resource': {'resource_id': instance.get('InstanceId')}})
+
+                    errors.append(error_resource_response)
+
+        return servers, errors
 
     def list_resources(self, params):
         start_time = time.time()
+        total_resources = []
 
         try:
-            resources = self.list_instances(params)
-            print(f'   [{params["region_name"]}] Finished {time.time() - start_time} Seconds')
-            return resources
+            resources, error_resources = self.list_instances(params)
+            total_resources.extend(resources)
+            total_resources.extend(error_resources)
+            _LOGGER.debug(f'[list_resources] [{params["region_name"]}] Finished {time.time() - start_time} Seconds')
+
+            return total_resources
 
         except Exception as e:
-            print(f'[ERROR: {params["region_name"]}] : {e}')
-            raise e
+            _LOGGER.error(f'[list_resources] [{params["region_name"]}] {e}')
+
+            if type(e) is dict:
+                error_resource_response = ErrorResourceResponse({'message': json.dumps(e)})
+            else:
+                error_resource_response = ErrorResourceResponse({'message': str(e)})
+
+            total_resources.append(error_resource_response)
+            return total_resources
 
     @staticmethod
     def list_cloud_service_types():

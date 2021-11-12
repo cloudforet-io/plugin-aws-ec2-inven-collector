@@ -1,5 +1,5 @@
 from schematics import Model
-from schematics.types import serializable, ModelType, ListType, StringType
+from schematics.types import ModelType, ListType, StringType, PolyModelType
 from spaceone.inventory.model import OS, AWS, Hardware, SecurityGroup, Compute, LoadBalancer, VPC, Subnet, \
     AutoScalingGroup, NIC, Disk, ServerMetadata, CloudWatch
 
@@ -44,5 +44,5 @@ class Server(Model):
     provider = StringType(default='aws')
     cloud_service_type = StringType(default='Instance')
     cloud_service_group = StringType(default='EC2')
-    _metadata = ModelType(ServerMetadata, serialized_name='metadata')
+    _metadata = PolyModelType(ServerMetadata, serialized_name='metadata', serialize_when_none=False)
     reference = ModelType(ReferenceModel)

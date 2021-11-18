@@ -2,7 +2,7 @@ from schematics import Model
 from schematics.types import StringType, DictType, ListType, ModelType, PolyModelType
 from spaceone.inventory.model.cloud_service_type import CloudServiceType
 from spaceone.inventory.model.server import Server
-
+from spaceone.inventory.model.region import Region
 
 class ErrorResource(Model):
     resource_type = StringType(default='inventory.Server')
@@ -31,6 +31,7 @@ class RegionResourceResponse(ResourceResponse):
     state = StringType(default='SUCCESS')
     resource_type = StringType(default='inventory.Region')
     match_rules = DictType(ListType(StringType), default={'1': ['region_code', 'provider']})
+    resource = PolyModelType(Region)
 
 
 class CloudServiceTypeResourceResponse(ResourceResponse):

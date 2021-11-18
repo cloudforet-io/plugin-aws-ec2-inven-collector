@@ -227,7 +227,7 @@ class CollectorManager(BaseManager):
         return list(set(merge_ip_address))
 
     @staticmethod
-    def get_region_from_result(result):
+    def get_region_from_result(resource):
         REGION_INFO = {
             'us-east-1': {'name': 'US East (N. Virginia)', 'tags': {'latitude': '39.028760', 'longitude': '-77.458263'}},
             'us-east-2': {'name': 'US East (Ohio)', 'tags': {'latitude': '40.103564', 'longitude': '-83.200092'}},
@@ -256,12 +256,12 @@ class CollectorManager(BaseManager):
             'us-gov-west-1': {'name': 'AWS GovCloud (US)'},
         }
 
-        match_region_info = REGION_INFO.get(getattr(result.data.compute, 'region_name', None))
+        match_region_info = REGION_INFO.get(getattr(resource, 'region_code', None))
 
         if match_region_info is not None:
             region_info = match_region_info.copy()
             region_info.update({
-                'region_code': result.data.compute.region_name
+                'region_code': resource.region_code
             })
 
             return Region(region_info, strict=False)

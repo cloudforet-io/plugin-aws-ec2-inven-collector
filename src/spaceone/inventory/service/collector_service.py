@@ -161,7 +161,7 @@ class CollectorService(BaseService):
                     yield result
 
         for resource_region in resource_regions:
-            yield RegionResourceResponse(resource_region)
+            yield RegionResourceResponse({'resource': resource_region})
 
         _LOGGER.debug(f'[collect] TOTAL FINISHED {time.time() - start_time} Sec')
 

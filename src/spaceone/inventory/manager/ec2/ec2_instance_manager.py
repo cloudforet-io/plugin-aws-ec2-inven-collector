@@ -22,7 +22,6 @@ class EC2InstanceManager(BaseManager):
             "primary_ip_address": "",
             "account": "",
             "type": "",
-            "availability_zone": "",
             "launched_at": "datetime",
             "data":  {
                 "os": {
@@ -78,7 +77,6 @@ class EC2InstanceManager(BaseManager):
         compute_data = self.get_compute_data(instance, match_image)
         server_dic.update({
             'type': compute_data.get('instance_type'),
-            'availability_zone': compute_data.get('az'),
             'launched_at': compute_data.get('launched_at'),
             'data': {
                 'os': os_data,

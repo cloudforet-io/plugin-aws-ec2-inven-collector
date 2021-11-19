@@ -1,5 +1,5 @@
 from schematics import Model
-from schematics.types import ModelType, ListType, StringType, PolyModelType
+from schematics.types import ModelType, ListType, StringType, PolyModelType, DateTimeType
 from spaceone.inventory.model import OS, AWS, Hardware, SecurityGroup, Compute, LoadBalancer, VPC, Subnet, \
     AutoScalingGroup, NIC, Disk, ServerMetadata, CloudWatch
 
@@ -31,7 +31,7 @@ class ServerData(Model):
 
 
 class Server(Model):
-    name = StringType()
+    name = StringType(default='')
     region_code = StringType()
     data = ModelType(ServerData)
     tags = ListType(ModelType(Tags))
@@ -39,6 +39,11 @@ class Server(Model):
     disks = ListType(ModelType(Disk))
     primary_ip_address = StringType(default='')
     ip_addresses = ListType(StringType())
+    account = StringType()
+    type = StringType(serialize_when_none=False)
+    size = StringType(serialize_when_none=False)
+    availability_zone = StringType(serialize_when_none=False)
+    launched_at = DateTimeType(serialize_when_none=False)
     server_type = StringType(default='VM')
     os_type = StringType(choices=('LINUX', 'WINDOWS'))
     provider = StringType(default='aws')

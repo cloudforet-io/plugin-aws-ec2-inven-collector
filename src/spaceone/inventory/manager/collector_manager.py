@@ -147,6 +147,7 @@ class CollectorManager(BaseManager):
                     })
 
                     server_data['data']['compute']['account'] = account_id
+                    server_data['account'] = account_id
 
                     server_data.update({
                         '_metadata': meta_manager.get_metadata(),

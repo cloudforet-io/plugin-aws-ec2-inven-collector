@@ -42,7 +42,6 @@ class Server(Model):
     account = StringType()
     type = StringType(serialize_when_none=False)
     size = StringType(serialize_when_none=False)
-    availability_zone = StringType(serialize_when_none=False)
     launched_at = DateTimeType(serialize_when_none=False)
     server_type = StringType(default='VM')
     os_type = StringType(choices=('LINUX', 'WINDOWS'))

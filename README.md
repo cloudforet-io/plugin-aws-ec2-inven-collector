@@ -64,9 +64,9 @@ authentication privilege for followings:
     "Statement": [
         {
             "Action": [
-                "autoscaling:Describe*",
-                "ec2:Describe*",
-                "elasticloadbalancing:Describe*",
+                "cloudwatch:Describe*",
+                "cloudwatch:Get*",
+                "cloudwatch:List*",
             ],
             "Effect": "Allow",
             "Resource": "*"
@@ -81,10 +81,3 @@ authentication privilege for followings:
 
 # Release Note
 
-## Version 1.12.1
-Remove region filter in secret_data. It is not used.
-
-## Version 1.3.1
-Support collect Large Capacity of EC2s (More than 2k) 
-* Handling API 'rate exceeded'
-* Default maximum number of retries has set to handle up to 10k APIs

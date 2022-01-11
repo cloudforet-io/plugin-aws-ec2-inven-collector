@@ -1,12 +1,16 @@
+
 # plugin-aws-ec2
-Plugin for collecting AWS EC2
 
-# Configuration
-(TBD)
+![AWS Cloud Services](https://spaceone-custom-assets.s3.ap-northeast-2.amazonaws.com/console-assets/icons/aws-cloudservice.svg)
+**Plugin to collect EC2 information**
+
+> SpaceONE's [plugin-aws-ec2-inven-collector](https://github.com/spaceone-dev/plugin-aws-ec2-inven-collector) is a convenient tool to get EC2 resources information from AWS.
 
 
-## Example
-(TBD)
+Find us also at [Dockerhub](https://hub.docker.com/repository/docker/spaceone/plugin-aws-ec2-inven-collector)
+> Latest stable version : 1.13
+
+Please contact us if you need any further information. (<support@spaceone.dev>)
 
 ---
 
@@ -46,6 +50,32 @@ The regions we collect are not all regions supported by AWS. Exactly, we target 
 |15|Europe (Paris)|eu-west-3|
 |16|Europe (Stockholm)|eu-north-1|
 |17|South America (São Paulo)|sa-east-1|
+
+---
+## Authentication Overview
+
+Registered service account on SpaceONE must have certain permissions to collect cloud service data Please, set
+authentication privilege for followings:
+
+<pre>
+<code>
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Action": [
+                "autoscaling:Describe*",
+                "ec2:Describe*",
+                "elasticloadbalancing:Describe*",
+            ],
+            "Effect": "Allow",
+            "Resource": "*"
+        }
+    ]
+}
+</code>
+</pre>
+
 
 ---
 

@@ -1,5 +1,5 @@
 
-# plugin-aws-ec2
+# plugin-aws-ec2-inven-collector
 
 ![AWS Cloud Services](https://spaceone-custom-assets.s3.ap-northeast-2.amazonaws.com/console-assets/icons/aws-cloudservice.svg)
 **Plugin to collect EC2 information**

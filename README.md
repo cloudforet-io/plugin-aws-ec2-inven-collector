@@ -1,7 +1,15 @@
+<h1 align="center">AWS EC2 Instance Collector</h1>  
 
-# plugin-aws-ec2-inven-collector
+<br/>  
+<div align="center" style="display:flex;">  
+  <img width="245" src="https://spaceone-custom-assets.s3.ap-northeast-2.amazonaws.com/console-assets/icons/aws-cloudservice.svg">
+  <p> 
+    <br>
+    <img alt="Version"  src="https://img.shields.io/badge/version-1.13-blue.svg?cacheSeconds=2592000"  />    
+    <a href="https://www.apache.org/licenses/LICENSE-2.0"  target="_blank"><img alt="License: Apache 2.0"  src="https://img.shields.io/badge/License-Apache 2.0-yellow.svg" /></a> 
+  </p> 
+</div>    
 
-![AWS Cloud Services](https://spaceone-custom-assets.s3.ap-northeast-2.amazonaws.com/console-assets/icons/aws-cloudservice.svg)
 **Plugin to collect EC2 information**
 
 > SpaceONE's [plugin-aws-ec2-inven-collector](https://github.com/spaceone-dev/plugin-aws-ec2-inven-collector) is a convenient tool to get EC2 resources information from AWS.
@@ -50,6 +58,16 @@ The regions we collect are not all regions supported by AWS. Exactly, we target 
 |15|Europe (Paris)|eu-west-3|
 |16|Europe (Stockholm)|eu-north-1|
 |17|South America (São Paulo)|sa-east-1|
+
+---
+
+### Service list
+
+The following is a list of services being collected and service code information.
+
+|No.|Service name|Service Code|
+|---|------|---|
+|1|EC2 Instance|AmazonEC2|
 
 ---
 ## Authentication Overview

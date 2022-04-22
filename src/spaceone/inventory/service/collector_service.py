@@ -81,6 +81,7 @@ class CollectorService(BaseService):
     def init(self, params):
         """ init plugin by options
         """
+        print("test")
         capability = {
             'filter_format': FILTER_FORMAT,
             'supported_resource_type': SUPPORTED_RESOURCE_TYPE,

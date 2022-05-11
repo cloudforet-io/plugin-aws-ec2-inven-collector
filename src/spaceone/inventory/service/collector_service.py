@@ -7,67 +7,9 @@ from spaceone.core.service import *
 from spaceone.inventory.manager.collector_manager import CollectorManager
 from spaceone.inventory.model.resource import CloudServiceTypeResourceResponse, ServerResourceResponse, \
     RegionResourceResponse, ErrorResourceResponse
+from spaceone.inventory.conf.cloud_service_conf import *
 
 _LOGGER = logging.getLogger(__name__)
-DEFAULT_REGION = 'us-east-1'
-FILTER_FORMAT = [
-    {
-        'key': 'project_id',
-        'name': 'Project ID',
-        'type': 'str',
-        'resource_type': 'SERVER',
-        'search_key': 'identity.Project.project_id',
-        'change_rules': [{
-            'resource_key': 'data.compute.instance_id',
-            'change_key': 'instance_id'
-        }, {
-            'resource_key': 'data.compute.region',
-            'change_key': 'region_name'
-        }]
-    }, {
-        'key': 'collection_info.service_accounts',
-        'name': 'Service Account ID',
-        'type': 'str',
-        'resource_type': 'SERVER',
-        'search_key': 'identity.ServiceAccount.service_account_id',
-        'change_rules': [{
-            'resource_key': 'data.compute.instance_id',
-            'change_key': 'instance_id'
-        }, {
-            'resource_key': 'data.compute.region',
-            'change_key': 'region_name'
-        }]
-    }, {
-        'key': 'server_id',
-        'name': 'Server ID',
-        'type': 'list',
-        'resource_type': 'SERVER',
-        'search_key': 'inventory.Server.server_id',
-        'change_rules': [{
-            'resource_key': 'data.compute.instance_id',
-            'change_key': 'instance_id'
-        }, {
-            'resource_key': 'data.compute.region',
-            'change_key': 'region_name'
-        }]
-    }, {
-        'key': 'instance_id',
-        'name': 'Instance ID',
-        'type': 'list',
-        'resource_type': 'CUSTOM'
-    },
-    {
-        'key': 'region_name',
-        'name': 'Region',
-        'type': 'list',
-        'resource_type': 'CUSTOM'
-    }
-]
-
-SUPPORTED_FEATURES = ['garbage_collection']
-SUPPORTED_RESOURCE_TYPE = ['inventory.Server', 'inventory.Region', 'inventory.CloudServiceType']
-SUPPORTED_SCHEDULES = ['hours']
-NUMBER_OF_CONCURRENT = 20
 
 
 @authentication_handler
@@ -90,7 +32,7 @@ class CollectorService(BaseService):
         return {'metadata': capability}
 
     @transaction
-    @check_required(['options','secret_data'])
+    @check_required(['options', 'secret_data'])
     def verify(self, params):
         """ verify options capability
         Args:
@@ -191,11 +133,6 @@ class CollectorService(BaseService):
 
         Returns: list of region name
         """
-
-        # Remove region filter in secret_data
-        # if 'region_name' in secret_data:
-        #     return [secret_data['region_name']]
-
         if filter_region_name:
             return filter_region_name
 

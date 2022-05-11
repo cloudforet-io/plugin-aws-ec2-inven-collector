@@ -1,5 +1,5 @@
 from schematics import Model
-from schematics.types import ModelType, ListType, StringType, PolyModelType, DateTimeType
+from schematics.types import ModelType, ListType, StringType, PolyModelType, DateTimeType, FloatType
 from spaceone.inventory.model import OS, AWS, Hardware, SecurityGroup, Compute, LoadBalancer, VPC, Subnet, \
     AutoScalingGroup, NIC, Disk, ServerMetadata, CloudWatch
 
@@ -27,6 +27,9 @@ class ServerData(Model):
     vpc = ModelType(VPC)
     subnet = ModelType(Subnet)
     auto_scaling_group = ModelType(AutoScalingGroup, serialize_when_none=False)
+    nics = ListType(ModelType(NIC))
+    disks = ListType(ModelType(Disk))
+    primary_ip_address = StringType(default='')
     cloudwatch = ModelType(CloudWatch)
 
 
@@ -35,18 +38,16 @@ class Server(Model):
     region_code = StringType()
     data = ModelType(ServerData)
     tags = ListType(ModelType(Tags))
-    nics = ListType(ModelType(NIC))
-    disks = ListType(ModelType(Disk))
-    primary_ip_address = StringType(default='')
     ip_addresses = ListType(StringType())
     account = StringType()
     type = StringType(serialize_when_none=False)
     size = StringType(serialize_when_none=False)
     launched_at = DateTimeType(serialize_when_none=False)
     server_type = StringType(default='VM')
-    os_type = StringType(choices=('LINUX', 'WINDOWS'))
     provider = StringType(default='aws')
     cloud_service_type = StringType(default='Instance')
     cloud_service_group = StringType(default='EC2')
+    instance_type = StringType(serialize_when_none=False)
+    instance_size = FloatType(serialize_when_none=False)
     _metadata = PolyModelType(ServerMetadata, serialized_name='metadata', serialize_when_none=False)
     reference = ModelType(ReferenceModel)

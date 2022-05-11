@@ -22,7 +22,7 @@ class ResourceResponse(Model):
 
 class ServerResourceResponse(ResourceResponse):
     state = StringType(default='SUCCESS')
-    resource_type = StringType(default='inventory.Server')
+    resource_type = StringType(default='inventory.CloudService')
     match_rules = DictType(ListType(StringType), default={'1': ['reference.resource_id']})
     resource = PolyModelType(Server)
 

@@ -16,17 +16,18 @@ class EC2InstanceManager(BaseManager):
     def get_server_info(self, instance, itypes, images):
         '''
         server_data = {
-            "os_type": "LINUX" | "WINDOWS"
             "name": ""
             "ip_addresses": [],
-            "primary_ip_address": "",
             "account": "",
             "type": "",
             "launched_at": "datetime",
             "data":  {
+                "primary_ip_address": "",
                 "os": {
                     "os_distro": "",
                     "os_arch": "",
+                    "os_type": "LINUX" | "WINDOWS",
+                    "os_details": "",
                 },
                 "aws": {
                     "ebs_optimized": "",
@@ -91,7 +92,6 @@ class EC2InstanceManager(BaseManager):
     def get_server_dic(self, instance):
         server_data = {
             'name': self.generate_name(instance),
-            'os_type': self.get_os_type(instance),
             'region_code': self.params['region_name'],
         }
         return server_data
@@ -99,7 +99,8 @@ class EC2InstanceManager(BaseManager):
     def get_os_data(self, image, os_type):
         os_data = {
             'os_distro': self.get_os_distro(image.get('Name', ''), os_type),
-            'os_arch': image.get('Architecture', '')
+            'os_arch': image.get('Architecture', ''),
+            'os_type': os_type,
         }
 
         return OS(os_data, strict=False)

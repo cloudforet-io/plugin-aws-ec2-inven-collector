@@ -12,8 +12,6 @@ from spaceone.inventory.model.server import Server, ReferenceModel
 from spaceone.inventory.model.region import Region
 from spaceone.inventory.model.cloud_service_type import CloudServiceType
 from spaceone.inventory.model.resource import ErrorResourceResponse, ServerResourceResponse
-from spaceone.inventory.model.metadata.metadata import CloudServiceTypeMetadata
-from spaceone.inventory.model.metadata.metadata_dynamic_field import TextDyField, EnumDyField, SizeField, DateTimeDyField, ListDyField
 from spaceone.inventory.conf.cloud_service_conf import *
 
 
@@ -45,6 +43,7 @@ class CollectorManager(BaseManager):
 
         ec2_connector: EC2Connector = self.locator.get_connector('EC2Connector')
         ec2_connector.set_client(params['secret_data'], params['region_name'])
+        meta_manager: MetadataManager = MetadataManager()
 
         instance_filter = {}
         # Instance list and account ID
@@ -64,8 +63,6 @@ class CollectorManager(BaseManager):
             vpc_manager: VPCManager = VPCManager(params)
             sg_manager: SecurityGroupManager = SecurityGroupManager(params)
             cw_manager: CloudWatchManager = CloudWatchManager(params)
-
-            meta_manager: MetadataManager = MetadataManager()
 
             # Instance Type
             itypes = ec2_connector.list_instance_types()
@@ -153,7 +150,7 @@ class CollectorManager(BaseManager):
                     server_data['account'] = account_id
 
                     server_data.update({
-                        '_metadata': meta_manager.get_metadata(),
+                        '_metadata': meta_manager.get_server_metadata(),
                         'reference': ReferenceModel({
                             'resource_id': server_data['data']['compute']['instance_id'],
                             'external_link': f"https://{params.get('region_name')}.console.aws.amazon.com/ec2/v2/home?region={params.get('region_name')}#Instances:instanceId={server_data['data']['compute']['instance_id']}"
@@ -201,232 +198,10 @@ class CollectorManager(BaseManager):
 
     @staticmethod
     def list_cloud_service_types():
-        metadata = CloudServiceTypeMetadata.set_meta(
-            fields=[
-                TextDyField.data_source('Server ID', 'server_id'),
-                TextDyField.data_source('Name', 'name'),
-                TextDyField.data_source('Resource ID', 'reference.resource_id'),
-                EnumDyField.data_source('Management State', 'state', default_state={
-                    'safe': ['ACTIVE'], 'disable': ['DELETED']
-                }, options={'is_optional': True}),
-                TextDyField.data_source('Instance Type', 'data.compute.instance_type'),
-                TextDyField.data_source('Core', 'data.hardware.core'),
-                TextDyField.data_source('Memory', 'data.hardware.memory'),
-                TextDyField.data_source('Provider', 'provider', reference={
-                    'resource_type': 'identity.Provider',
-                    'reference_key': 'provider'
-                }),
-                TextDyField.data_source('Cloud Service Group', 'cloud_service_group', options={
-                    'is_optional': True
-                }),
-                TextDyField.data_source('Cloud Service Type', 'cloud_service_type', options={
-                    'is_optional': True
-                }),
-                TextDyField.data_source('Instance ID', 'data.compute.instance_id', options={
-                    'is_optional': True
-                }),
-                TextDyField.data_source('Key Pair', 'data.compute.keypair', options={
-                    'is_optional': True
-                }),
-                TextDyField.data_source('Image', 'data.compute.image', options={
-                    'is_optional': True
-                }),
-                TextDyField.data_source('Image', 'data.compute.image', options={
-                    'is_optional': True
-                }),
-                EnumDyField.data_source('Instance State', 'data.compute.instance_state', default_state={
-                    'safe': ['RUNNING'],
-                    'warning': ['PENDING', 'REBOOTING', 'SHUTTING-DOWN', 'STOPPING', 'STARTING',
-                                'PROVISIONING', 'STAGING', 'DEALLOCATING', 'REPAIRING'],
-                    'alert': ['STOPPED', 'DEALLOCATED', 'SUSPENDED'],
-                    'disable': ['TERMINATED']
-                }, options={'is_optional': True}),
-                TextDyField.data_source('Availability Zone', 'data.compute.az'),
-                TextDyField.data_source('OS Type', 'data.os.os_type', options={
-                    'is_optional': True
-                }),
-                TextDyField.data_source('OS', 'data.os.os_distro'),
-                TextDyField.data_source('OS Architecture', 'data.os.os_arch', options={
-                    'is_optional': True
-                }),
-                TextDyField.data_source('Primary IP', 'data.primary_ip_address'),
-                TextDyField.data_source('Public IP', 'data.nics.public_ip_address'),
-                TextDyField.data_source('Public DNS', 'data.tags.public_dns', options={
-                    'is_optional': True
-                }),
-                TextDyField.data_source('All IP', 'ip_addresses', options={
-                    'is_optional': True
-                }),
-                TextDyField.data_source('MAC Address', 'nics.mac_address', options={
-                    'is_optional': True
-                }),
-                TextDyField.data_source('CIDR', 'nics.cidr', options={
-                    'is_optional': True
-                }),
-                TextDyField.data_source('VPC ID', 'data.vpc.vpc_id', options={
-                    'is_optional': True
-                }),
-                TextDyField.data_source('Subnet ID', 'data.subnet.subnet_id', options={
-                    'is_optional': True
-                }),
-                TextDyField.data_source('Subnet Name', 'data.subnet.subnet_name', options={
-                    'is_optional': True
-                }),
-                TextDyField.data_source('ELB Name', 'data.load_balancers.name', options={
-                    'is_optional': True
-                }),
-                TextDyField.data_source('ELB DNS', 'data.load_balancers.dns', options={
-                    'is_optional': True
-                }),
-                TextDyField.data_source('IAM Role ARN', 'data.aws.iam_instance_profile.arn', options={
-                    'is_optional': True
-                }),
-                TextDyField.data_source('EC2 Lifecycle', 'data.aws.lifecycle', options={
-                    'is_optional': True
-                }),
-                TextDyField.data_source('Auto Scaling Group', 'data.auto_scaling_group.name', options={
-                    'is_optional': True
-                }),
-                TextDyField.data_source('CPU Utilization', 'data.monitoring.cpu.utilization.avg', options={
-                    'default': 0,
-                    'is_optional': True,
-                    'field_description': '(Daily Average)'
-                }),
-                TextDyField.data_source('Memory Usage', 'data.monitoring.memory.usage.avg', options={
-                    'default': 0,
-                    'is_optional': True,
-                    'field_description': '(Daily Average)'
-                }),
-                TextDyField.data_source('Disk Read IOPS', 'data.monitoring.disk.read_iops.avg', options={
-                    'default': 0,
-                    'is_optional': True,
-                    'field_description': '(Daily Average)'
-                }),
-                TextDyField.data_source('Disk Write IOPS', 'data.monitoring.disk.write_iops.avg', options={
-                    'default': 0,
-                    'is_optional': True,
-                    'field_description': '(Daily Average)'
-                }),
-                SizeField.data_source('Disk Read Throughput', 'data.monitoring.disk.read_throughput.avg', options={
-                    'default': 0,
-                    'is_optional': True,
-                    'field_description': '(Daily Average)'
-                }),
-                SizeField.data_source('Disk Write Throughput', 'data.monitoring.disk.write_throughput.avg', options={
-                    'default': 0,
-                    'is_optional': True,
-                    'field_description': '(Daily Average)'
-                }),
-                TextDyField.data_source('Network Received PPS', 'data.monitoring.network.received_pps.avg', options={
-                    'default': 0,
-                    'is_optional': True,
-                    'field_description': '(Daily Average)'
-                }),
-                TextDyField.data_source('Network Send PPS', 'data.monitoring.network.sent_pps.avg', options={
-                    'default': 0,
-                    'is_optional': True,
-                    'field_description': '(Daily Average)'
-                }),
-                SizeField.data_source('Network Received Throughput', 'data.monitoring.network.received_throughput.avg',
-                                      options={
-                                          'default': 0,
-                                          'is_optional': True,
-                                          'field_description': '(Daily Average)'
-                                      }),
-                SizeField.data_source('Network Sent Throughput', 'data.monitoring.network.sent_throughput.avg',
-                                      options={
-                                          'default': 0,
-                                          'is_optional': True,
-                                          'field_description': '(Daily Average)'
-                                      }),
-                TextDyField.data_source('CPU Utilization', 'data.monitoring.cpu.utilization.max', options={
-                    'default': 0,
-                    'is_optional': True,
-                    'field_description': '(Daily Max)'
-                }),
-                TextDyField.data_source('Memory Usage', 'data.monitoring.memory.usage.max', options={
-                    'default': 0,
-                    'is_optional': True,
-                    'field_description': '(Daily Max)'
-                }),
-                TextDyField.data_source('Disk Read IOPS', 'data.monitoring.disk.read_iops.max', options={
-                    'default': 0,
-                    'is_optional': True,
-                    'field_description': '(Daily Max)'
-                }),
-                TextDyField.data_source('Disk Write IOPS', 'data.monitoring.disk.write_iops.max', options={
-                    'default': 0,
-                    'is_optional': True,
-                    'field_description': '(Daily Max)'
-                }),
-                SizeField.data_source('Disk Read Throughput', 'data.monitoring.disk.read_throughput.max', options={
-                    'default': 0,
-                    'is_optional': True,
-                    'field_description': '(Daily Max)'
-                }),
-                SizeField.data_source('Disk Write Throughput', 'data.monitoring.disk.write_throughput.max', options={
-                    'default': 0,
-                    'is_optional': True,
-                    'field_description': '(Daily Max)'
-                }),
-                TextDyField.data_source('Network Received PPS', 'data.monitoring.network.received_pps.max', options={
-                    'default': 0,
-                    'is_optional': True,
-                    'field_description': '(Daily Max)'
-                }),
-                TextDyField.data_source('Network Send PPS', 'data.monitoring.network.sent_pps.max', options={
-                    'default': 0,
-                    'is_optional': True,
-                    'field_description': '(Daily Max)'
-                }),
-                SizeField.data_source('Network Received Throughput', 'data.monitoring.network.received_throughput.max',
-                                      options={
-                                          'default': 0,
-                                          'is_optional': True,
-                                          'field_description': '(Daily Max)'
-                                      }),
-                SizeField.data_source('Network Sent Throughput', 'data.monitoring.network.sent_throughput.max',
-                                      options={
-                                          'default': 0,
-                                          'is_optional': True,
-                                          'field_description': '(Daily Max)'
-                                      }),
-                TextDyField.data_source('Account ID', 'account'),
-                TextDyField.data_source('Region', 'region_code',
-                                        options={'is_optional': True},
-                                        reference={'resource_type': 'inventory.Region',
-                                                   'reference_key': 'region_code'}),
-                TextDyField.data_source('Project', 'project_id',
-                                        options={'sortable': False},
-                                        reference={'resource_type': 'inventory.Project',
-                                                   'reference_key': 'project_id'}),
-                TextDyField.data_source('Service Accounts', 'collection_info.service_accounts',
-                                        options={'is_optional': True},
-                                        reference={'resource_type': 'inventory.ServiceAccount',
-                                                   'reference_key': 'service_account_id'}),
-                TextDyField.data_source('Secrets', 'collection_info.secrets',
-                                        options={'is_optional': True},
-                                        reference={'resource_type': 'secret.Secret',
-                                                   'reference_key': 'secret_id'}),
-                TextDyField.data_source('Collectors', 'collection_info.collectors',
-                                        options={'is_optional': True},
-                                        reference={'resource_type': 'inventory.Collector',
-                                                   'reference_key': 'collector_id'}),
-                TextDyField.data_source('Launched', 'launched_at', options={'is_optional': True}),
-                DateTimeDyField.data_source('Last Collected', 'updated_at', options={'source_type': "iso8601"}),
-                DateTimeDyField.data_source('Created', 'created_at', options={
-                    'source_type': "iso8601",
-                    'is_optional': True
-                }),
-                DateTimeDyField.data_source('Deleted', 'deleted_at', options={
-                    'source_type': "iso8601",
-                    'is_optional': True
-                })
-            ]
-        )
+        meta_manager: MetadataManager = MetadataManager()
 
         cloud_service_type = {
-            '_metadata': metadata,
+            '_metadata': meta_manager.get_cloud_service_type_metadata(),
             'tags': {
                 'spaceone:icon': 'https://spaceone-custom-assets.s3.ap-northeast-2.amazonaws.com/console-assets/icons/aws-ec2.svg',
             }

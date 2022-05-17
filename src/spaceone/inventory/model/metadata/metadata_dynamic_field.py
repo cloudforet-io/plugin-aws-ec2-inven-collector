@@ -1,7 +1,7 @@
 import math
 from schematics import Model
-from schematics.types import ModelType, StringType, PolyModelType, DictType, BooleanType
-from spaceone.inventory.model.metadata.metadata_dynamic_search import BaseDynamicSearch
+from schematics.types import ModelType, StringType, PolyModelType, DictType, ListType, BooleanType
+from .metadata_dynamic_search import BaseDynamicSearch
 
 
 BACKGROUND_COLORS = [
@@ -12,8 +12,7 @@ BACKGROUND_COLORS = [
     'yellow', 'yellow.100', 'yellow.200', 'yellow.300', 'yellow.400', 'yellow.500', 'yellow.600', 'yellow.700', 'yellow.800', 'yellow.900',
     'green', 'green.100', 'green.200', 'green.300', 'green.400', 'green.500', 'green.600', 'green.700', 'green.800', 'green.900',
     'blue', 'blue.100', 'blue.200', 'blue.300', 'blue.400', 'blue.500', 'blue.600', 'blue.700', 'blue.800', 'blue.900',
-    'violet', 'violet.100', 'violet.200', ''
-                                          'violet.300', 'violet.400', 'violet.500', 'violet.600', 'violet.700', 'violet.800', 'violet.900',
+    'violet', 'violet.100', 'violet.200', 'violet.300', 'violet.400', 'violet.500', 'violet.600', 'violet.700', 'violet.800', 'violet.900',
     'peacock', 'peacock.100', 'peacock.200', 'peacock.300', 'peacock.400', 'peacock.500', 'peacock.600', 'peacock.700', 'peacock.800', 'peacock.900',
     'indigo', 'indigo.100', 'indigo.200', 'indigo.300', 'indigo.400', 'indigo.500', 'indigo.600', 'indigo.700', 'indigo.800', 'indigo.900',
 ]
@@ -52,8 +51,8 @@ class FieldViewOption(Model):
 
 
 class BaseDynamicField(BaseField):
-    name = StringType()
-    key = StringType()
+    name = StringType(serialize_when_none=False)
+    key = StringType(serialize_when_none=False)
     reference = ModelType(FieldReference, serialize_when_none=False)
 
     @classmethod
@@ -262,11 +261,14 @@ class ListDyField(BaseDynamicField):
         return cls(_data_source)
 
 
+class EnumOptionDyField(FieldViewOption):
+    items = DictType(PolyModelType([StateItemDyField, BadgeItemDyField, ImageItemDyField, DatetimeItemDyField]),
+                     serialize_when_none=False, default={})
+
+
 class EnumDyField(BaseDynamicField):
     type = StringType(default="enum")
-    options = DictType(PolyModelType([StateItemDyField, BadgeItemDyField, ImageItemDyField, DatetimeItemDyField]),
-                       serialize_when_none=False,
-                       default={})
+    options = PolyModelType([EnumOptionDyField, FieldViewOption], serialize_when_none=False, default={})
 
     @classmethod
     def data_source(cls, name, key, **kwargs):
@@ -275,7 +277,7 @@ class EnumDyField(BaseDynamicField):
         _default_state = kwargs.get('default_state', {})
         _default_outline_badge = kwargs.get('default_outline_badge', [])
 
-        _options_dic = {}
+        _options_item_dic = {}
 
         for _key in _default_outline_badge:
             _round_index = len(TYPE_BADGE)
@@ -288,11 +290,11 @@ class EnumDyField(BaseDynamicField):
             if _round_index - 1 < _index:
                 _index = _index - _round_index
 
-            _options_dic[_key] = BadgeItemDyField.set({'outline_color': TYPE_BADGE[_index]})
+            _options_item_dic[_key] = BadgeItemDyField.set({'outline_color': TYPE_BADGE[_index]})
 
         for _key in _default_badge:
             for _badge in _default_badge[_key]:
-                _options_dic[_badge] = BadgeItemDyField.set({'background_color': _key})
+                _options_item_dic[_badge] = BadgeItemDyField.set({'background_color': _key})
 
         for _key in _default_state:
             for _state in _default_state[_key]:
@@ -309,16 +311,17 @@ class EnumDyField(BaseDynamicField):
                 elif _key == 'alert':
                     _state_options = {'text_color': 'red.500', 'icon': {'color': 'red.500'}}
 
-                _options_dic[_state] = StateItemDyField.set(_state_options)
+                _options_item_dic[_state] = StateItemDyField.set(_state_options)
 
-        _data_source.update({'options': _options_dic})
+        _enum_options = {'items': _options_item_dic}
 
         if 'options' in kwargs:
-            _data_source.update({'options': kwargs.get('options')})
+            _enum_options.update(kwargs.get('options'))
 
         if 'reference' in kwargs:
             _data_source.update({'reference': kwargs.get('reference')})
 
+        _data_source.update({'options': EnumOptionDyField(_enum_options)})
         return cls(_data_source)
 
 

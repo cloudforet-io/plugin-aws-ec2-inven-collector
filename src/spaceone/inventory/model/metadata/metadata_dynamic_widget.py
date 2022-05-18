@@ -1,5 +1,5 @@
 from schematics import Model
-from schematics.types import StringType, ListType, BooleanType, ModelType, PolyModelType
+from schematics.types import StringType, ListType, BooleanType, ModelType, PolyModelType, BaseType
 from .metadata_dynamic_field import TextDyField, StateDyField, BadgeDyField, ListDyField, DictDyField, DateTimeDyField, \
     ImageDyField, EnumDyField, SizeField, ProgressField
 
@@ -28,7 +28,7 @@ class BaseDynamicWidgetQueryAggregateGroupFields(Model):
     name = StringType(serialize_when_none=False)
     operator = StringType(serialize_when_none=False)
     _fields = ListType(ModelType(BaseDynamicWidgetKeyFields), serialize_when_none=False, serialized_name='fields')
-    condition = ModelType(BaseDynamicWidgetGroupCondition, serialize_when_none=False)
+    conditions = ListType(ModelType(BaseDynamicWidgetGroupCondition), serialize_when_none=False)
 
 
 class BaseDynamicWidgetQueryAggregateGroup(Model):
@@ -51,17 +51,27 @@ class BaseDynamicWidgetQueryAggregateSort(Model):
     keys = ListType(ModelType(BaseDynamicWidgetQueryAggregateSortKey), serialize_when_none=False)
 
 
+class BaseDynamicWidgetQueryAggregateProjectField(Model):
+    key = StringType(serialize_when_none=False)
+    name = StringType(serialize_when_none=False)
+    operator = StringType(serialize_when_none=False)
+
+
+class BaseDynamicWidgetQueryAggregateProject(Model):
+    _fields = ListType(ModelType(BaseDynamicWidgetQueryAggregateProjectField), serialize_when_none=False, serialized_name='fields')
+
+
 class BaseDynamicWidgetQueryAggregate(Model):
     unwind = ModelType(BaseDynamicWidgetQueryAggregateUnwind, serialize_when_none=False)
     group = ModelType(BaseDynamicWidgetQueryAggregateGroup, serialize_when_none=False)
     count = ModelType(BaseDynamicWidgetQueryAggregateCount, serialize_when_none=False)
     sort = ModelType(BaseDynamicWidgetQueryAggregateSort, serialize_when_none=False)
+    project = ModelType(BaseDynamicWidgetQueryAggregateProject, serialize_when_none=False)
 
 
 class BaseDynamicWidgetQueryFilter(Model):
     key = StringType(serialize_when_none=False)
-    # value = PolyModelType([StringType], serialize_when_none=False)
-    value = StringType(serialize_when_none=False)
+    value = BaseType(serialize_when_none=False)
     operator = StringType(serialize_when_none=False)
 
 
@@ -72,7 +82,7 @@ class BaseDynamicWidgetQuery(Model):
 
 class BaseDynamicWidgetOptions(Model):
     value_options = PolyModelType([TextDyField, StateDyField, BadgeDyField, ListDyField, DictDyField, DateTimeDyField,
-                                   ImageDyField, EnumDyField, SizeField, ProgressField], serialize_when_none=False)
+                                  ImageDyField, EnumDyField, SizeField, ProgressField], serialize_when_none=False)
     name_options = PolyModelType([TextDyField, StateDyField, BadgeDyField, ListDyField, DictDyField, DateTimeDyField,
                                   ImageDyField, EnumDyField, SizeField, ProgressField], serialize_when_none=False)
     chart_type = StringType(choices=('COLUMN', 'DONUT', 'TREEMAP'), serialize_when_none=False)
@@ -133,12 +143,19 @@ class BaseDynamicWidget(Model):
 
                 _aggr_dict['sort'] = BaseDynamicWidgetQueryAggregateSort(_aggr_sort)
 
+            if 'project' in _aggregate:
+                _aggr_project = _aggregate['project']
+                _aggr_project_fields = [BaseDynamicWidgetQueryAggregateProjectField(_aggr_project_field)
+                                        for _aggr_project_field in _aggr_project.get('fields', [])]
+
+                _aggr_dict['project'] = BaseDynamicWidgetQueryAggregateProject({'fields': _aggr_project_fields})
+
             query_aggrs.append(BaseDynamicWidgetQueryAggregate(_aggr_dict))
 
         query['aggregate'] = query_aggrs
 
         # Query : filter
-        filter = [{'key': 'provider', 'value': 'azure', 'operator': 'eq'},
+        filter = [{'key': 'provider', 'value': 'aws', 'operator': 'eq'},
                   {'key': 'cloud_service_group', 'value': cloud_service_group, 'operator': 'eq'},
                   {'key': 'cloud_service_type', 'value': cloud_service_type, 'operator': 'eq'}]
 
@@ -148,6 +165,34 @@ class BaseDynamicWidget(Model):
             query.update({'filter': filter})
 
         query['filter'] = [BaseDynamicWidgetQueryFilter(_filter) for _filter in query['filter']]
+
+        if options:
+            field_type_maps = {
+                'text': TextDyField,
+                'state': StateDyField,
+                'badge': BadgeDyField,
+                'list': ListDyField,
+                'dict': DictDyField,
+                'datetime': DateTimeDyField,
+                'image': ImageDyField,
+                'enum': EnumDyField,
+                'size': SizeField,
+                'progress': ProgressField
+            }
+
+            if 'name_options' in options:
+                _name_options = options['name_options']
+                _type = _name_options.get('type', 'text')
+
+                if _type in field_type_maps:
+                    options['name_options'] = field_type_maps[_type](_name_options)
+
+            if 'value_options' in options:
+                _value_options = options['value_options']
+                _type = _value_options.get('type', 'text')
+
+                if _type in field_type_maps:
+                    options['value_options'] = field_type_maps[_type](_value_options)
 
         _dic = {
             'name': name,

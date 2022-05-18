@@ -1,9 +1,22 @@
+import os
 from spaceone.core.manager import BaseManager
+from spaceone.inventory.libs.utils import *
 from spaceone.inventory.model.metadata.metadata import ServerMetadata, CloudServiceTypeMetadata
 from spaceone.inventory.model.metadata.metadata_dynamic_layout import ItemDynamicLayout, TableDynamicLayout, \
     ListDynamicLayout
 from spaceone.inventory.model.metadata.metadata_dynamic_field import TextDyField, EnumDyField, ListDyField, \
-    DateTimeDyField, SizeField
+    DateTimeDyField, SizeField, SearchField
+from spaceone.inventory.model.metadata.metadata_dynamic_widget import CardWidget, ChartWidget
+
+current_dir = os.path.abspath(os.path.dirname(__file__))
+
+total_count_conf = os.path.join(current_dir, 'widget/total_count.yaml')
+total_disk_size_conf = os.path.join(current_dir, 'widget/total_disk_size.yaml')
+total_memory_size_conf = os.path.join(current_dir, 'widget/total_memory_size.yaml')
+total_vcpu_count_conf = os.path.join(current_dir, 'widget/total_vcpu_count.yaml')
+count_by_account_conf = os.path.join(current_dir, 'widget/count_by_account.yaml')
+count_by_instance_type_conf = os.path.join(current_dir, 'widget/count_by_instance_type.yaml')
+count_by_region_conf = os.path.join(current_dir, 'widget/count_by_region.yaml')
 
 
 class MetadataManager(BaseManager):
@@ -234,6 +247,90 @@ class MetadataManager(BaseManager):
                     'source_type': "iso8601",
                     'is_optional': True
                 })
+            ],
+            search=[
+                {
+                    'title': 'Properties',
+                    'items': [
+                        SearchField.set(name='IP Address', key='ip_addresses'),
+                        SearchField.set(name='Instance ID', key='data.compute.instance_id'),
+                        SearchField.set(name='Instance State', key='data.compute.instance_state'),
+                        SearchField.set(name='Instance Type', key='data.compute.instance_type'),
+                        SearchField.set(name='Key Pair', key='data.compute.keypair'),
+                        SearchField.set(name='Image', key='data.compute.image'),
+                        SearchField.set(name='Availability Zone', key='data.compute.az'),
+                        SearchField.set(name='OS Type', key='data.os.os_type'),
+                        SearchField.set(name='OS Architecture', key='data.os.os_arch'),
+                        SearchField.set(name='MAC Address', key='data.nics.mac_address'),
+                        SearchField.set(name='Public IP Address', key='data.nics.public_ip_address'),
+                        SearchField.set(name='Public DNS', key='data.nics.tags.public_dns'),
+                        SearchField.set(name='VPC ID', key='data.vpc.vpc_id'),
+                        SearchField.set(name='VPC Name', key='data.vpc.vpc_name'),
+                        SearchField.set(name='Subnet ID', key='data.subnet.subnet_id'),
+                        SearchField.set(name='Subnet Name', key='data.subnet.subnet_name'),
+                        SearchField.set(name='ELB Name', key='data.load_balancers.name'),
+                        SearchField.set(name='ELB DNS', key='data.load_balancers.dns'),
+                        SearchField.set(name='Auto Scaling Group', key='data.auto_scaling_group.name'),
+                        SearchField.set(name='Core', key='data.hardware.core', data_type='integer'),
+                        SearchField.set(name='Memory', key='data.hardware.memory', data_type='float'),
+                        SearchField.set(name='Management State', key='state'),
+                        SearchField.set(name='Provider', key='provider', reference='identity.Provider'),
+                        SearchField.set(name='Account ID', key='account'),
+                        SearchField.set(name='Cloud Service Group', key='cloud_service_group'),
+                        SearchField.set(name='Cloud Service Type', key='cloud_service_type'),
+                        SearchField.set(name='Region', key='region_code', reference='inventory.Region'),
+                        SearchField.set(name='Project', key='project_id', reference='identity.Project'),
+                        SearchField.set(name='Project Group', key='project_group_id', reference='identity.ProjectGroup'),
+                        SearchField.set(name='Service Account', key='collection_info.service_accounts',
+                                        reference='identity.ServiceAccount'),
+                        SearchField.set(name='Secret', key='collection_info.secrets',
+                                        reference='secret.Secret'),
+                        SearchField.set(name='Launched', key='launched_at'),
+                        SearchField.set(name='Last Collected', key='updated_at', data_type='datetime'),
+                        SearchField.set(name='Created', key='created_at', data_type='datetime'),
+                        SearchField.set(name='Deleted', key='deleted_at', data_type='datetime')
+                    ]
+                },
+                {
+                    'title': 'Monitoring',
+                    'items': [
+                        SearchField.set(name='CPU Utilization (Average)', key='data.monitoring.cpu.utilization.avg',
+                                        data_type='float'),
+                        SearchField.set(name='CPU Utilization (Max)', key='data.monitoring.cpu.utilization.max',
+                                        data_type='float'),
+                        SearchField.set(name='Disk Write IOPS (Average)', key='data.monitoring.disk.write_iops.avg',
+                                        data_type='float'),
+                        SearchField.set(name='Disk Write IOPS (Max)', key='data.monitoring.disk.write_iops.max',
+                                        data_type='float'),
+                        SearchField.set(name='Disk Read IOPS (Average)', key='data.monitoring.disk.read_iops.avg',
+                                        data_type='float'),
+                        SearchField.set(name='Disk Read IOPS (Max)', key='data.monitoring.disk.read_iops.max',
+                                        data_type='float'),
+                        SearchField.set(name='Network In (Average)', key='data.monitoring.network.received_throughput.avg',
+                                        data_type='float'),
+                        SearchField.set(name='Network In (Max)', key='data.monitoring.network.received_throughput.max',
+                                        data_type='float'),
+                        SearchField.set(name='Network Out (Average)', key='data.monitoring.network.sent_throughput.avg',
+                                        data_type='float'),
+                        SearchField.set(name='Network Out (Max)', key='data.monitoring.network.sent_throughput.max',
+                                        data_type='float')
+                    ]
+                },
+                {
+                    'title': 'Advanced',
+                    'items': [
+                        SearchField.set(name='Tags', key='tags', data_type='object')
+                    ]
+                }
+            ],
+            widget=[
+                CardWidget.set(**get_data_from_yaml(total_count_conf)),
+                CardWidget.set(**get_data_from_yaml(total_vcpu_count_conf)),
+                CardWidget.set(**get_data_from_yaml(total_memory_size_conf)),
+                CardWidget.set(**get_data_from_yaml(total_disk_size_conf)),
+                ChartWidget.set(**get_data_from_yaml(count_by_region_conf)),
+                ChartWidget.set(**get_data_from_yaml(count_by_instance_type_conf)),
+                ChartWidget.set(**get_data_from_yaml(count_by_account_conf)),
             ]
         )
         return metadata

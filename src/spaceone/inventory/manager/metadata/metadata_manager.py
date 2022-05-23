@@ -10,7 +10,7 @@ from spaceone.inventory.model.metadata.metadata_dynamic_widget import CardWidget
 
 current_dir = os.path.abspath(os.path.dirname(__file__))
 
-total_count_conf = os.path.join(current_dir, 'widget/total_count.yaml')
+total_count_conf = os.path.join(current_dir, 'widget/total_running_count.yaml')
 total_disk_size_conf = os.path.join(current_dir, 'widget/total_disk_size.yaml')
 total_memory_size_conf = os.path.join(current_dir, 'widget/total_memory_size.yaml')
 total_vcpu_count_conf = os.path.join(current_dir, 'widget/total_vcpu_count.yaml')

@@ -1,6 +1,7 @@
 import math
 from schematics import Model
-from schematics.types import ModelType, StringType, PolyModelType, DictType
+from schematics.types import ModelType, StringType, PolyModelType, DictType, ListType, BooleanType
+from .metadata_dynamic_search import BaseDynamicSearch
 
 
 BACKGROUND_COLORS = [
@@ -19,14 +20,14 @@ BACKGROUND_COLORS = [
 TYPE_BADGE = ['primary', 'indigo.500', 'coral.600', 'peacock.500', 'green.500']
 
 
+class FieldReference(Model):
+    resource_type = StringType()
+    reference_key = StringType(serialize_when_none=False)
+
+
 class Icon(Model):
     image = StringType(serialize_when_none=False)
     color = StringType(default='green', choices=BACKGROUND_COLORS)
-
-
-class Reference(Model):
-    resource_type = StringType()
-    reference_key = StringType()
 
 
 class BaseField(Model):
@@ -34,17 +35,25 @@ class BaseField(Model):
                                "datetime", "image", "enum", "progress", "size"],
                       serialize_when_none=False)
     options = PolyModelType([Model, DictType(PolyModelType(Model))], serialize_when_none=False)
-    reference = ModelType(Reference, serialize_when_none=False)
 
 
-class FieldViewOption(BaseField):
-    class Options:
-        serialize_when_none = False
+class FieldViewOption(Model):
+    link = StringType(serialize_when_none=False)
+    variables = StringType(serialize_when_none=False)
+    sortable = BooleanType(serialize_when_none=False)
+    sort_key = StringType(serialize_when_none=False)
+    translation_id = StringType(serialize_when_none=False)
+    default = StringType(serialize_when_none=False)
+    is_optional = BooleanType(serialize_when_none=False)
+    postfix = StringType(serialize_when_none=False)
+    prefix = StringType(serialize_when_none=False)
+    field_description = StringType(serialize_when_none=False)
 
 
 class BaseDynamicField(BaseField):
-    name = StringType()
-    key = StringType()
+    name = StringType(serialize_when_none=False)
+    key = StringType(serialize_when_none=False)
+    reference = ModelType(FieldReference, serialize_when_none=False)
 
     @classmethod
     def data_source(cls, name, key, **kwargs):
@@ -52,7 +61,7 @@ class BaseDynamicField(BaseField):
 
 
 class TextDyFieldOptions(FieldViewOption):
-    link = StringType(serialize_when_none=False)
+    pass
 
 
 class BadgeDyFieldOptions(FieldViewOption):
@@ -60,20 +69,17 @@ class BadgeDyFieldOptions(FieldViewOption):
     shape = StringType(serialize_when_none=False, choices=['SQUARE', 'ROUND'])
     outline_color = StringType(serialize_when_none=False, choices=BACKGROUND_COLORS)
     background_color = StringType(serialize_when_none=False, choices=BACKGROUND_COLORS)
-    link = StringType(serialize_when_none=False)
 
 
 class StateDyFieldOptions(FieldViewOption):
     text_color = StringType(serialize_when_none=False)
     icon = ModelType(Icon, serialize_when_none=False)
-    link = StringType(serialize_when_none=False)
 
 
 class ImageDyFieldOptions(FieldViewOption):
     image_url = StringType(default='')
     width = StringType(serialize_when_none=False)
     height = StringType(serialize_when_none=False)
-    link = StringType(serialize_when_none=False)
 
 
 class DateTimeDyFieldOptions(FieldViewOption):
@@ -129,14 +135,13 @@ class BadgeDyField(BaseDynamicField):
 
     @classmethod
     def data_source(cls, name, key, **kwargs):
-        _data_source = {'key': key, 'name': name,
-                        'options': BadgeDyFieldOptions({
-                            'background_color': 'gray.200',
-                            'text_color': 'gray.900'
-                        })}
+        _data_source = {'key': key, 'name': name}
 
         if 'options' in kwargs:
             _data_source.update({'options': BadgeDyFieldOptions(kwargs.get('options'))})
+        else:
+            _data_source.update({'options': BadgeDyFieldOptions({'background_color': 'gray.200',
+                                                                 'text_color': 'gray.900'})})
 
         if 'reference' in kwargs:
             _data_source.update({'reference': kwargs.get('reference')})
@@ -221,7 +226,6 @@ class ListDyFieldOptions(FieldViewOption):
     item = PolyModelType([BadgeItemDyField, StateDyField, DateTimeDyField, DictDyField], serialize_when_none=False)
     sub_key = StringType(serialize_when_none=False)
     delimiter = StringType(serialize_when_none=False)
-    link = StringType(serialize_when_none=False)
 
 
 class ListDyField(BaseDynamicField):
@@ -257,11 +261,14 @@ class ListDyField(BaseDynamicField):
         return cls(_data_source)
 
 
+class EnumOptionDyField(FieldViewOption):
+    items = DictType(PolyModelType([StateItemDyField, BadgeItemDyField, ImageItemDyField, DatetimeItemDyField]),
+                     serialize_when_none=False, default={})
+
+
 class EnumDyField(BaseDynamicField):
     type = StringType(default="enum")
-    options = DictType(PolyModelType([StateItemDyField, BadgeItemDyField, ImageItemDyField, DatetimeItemDyField]),
-                       serialize_when_none=False,
-                       default={})
+    options = PolyModelType([EnumOptionDyField, FieldViewOption], serialize_when_none=False, default={})
 
     @classmethod
     def data_source(cls, name, key, **kwargs):
@@ -270,7 +277,7 @@ class EnumDyField(BaseDynamicField):
         _default_state = kwargs.get('default_state', {})
         _default_outline_badge = kwargs.get('default_outline_badge', [])
 
-        _options_dic = {}
+        _options_item_dic = {}
 
         for _key in _default_outline_badge:
             _round_index = len(TYPE_BADGE)
@@ -283,11 +290,11 @@ class EnumDyField(BaseDynamicField):
             if _round_index - 1 < _index:
                 _index = _index - _round_index
 
-            _options_dic[_key] = BadgeItemDyField.set({'outline_color': TYPE_BADGE[_index]})
+            _options_item_dic[_key] = BadgeItemDyField.set({'outline_color': TYPE_BADGE[_index]})
 
         for _key in _default_badge:
             for _badge in _default_badge[_key]:
-                _options_dic[_badge] = BadgeItemDyField.set({'background_color': _key})
+                _options_item_dic[_badge] = BadgeItemDyField.set({'background_color': _key})
 
         for _key in _default_state:
             for _state in _default_state[_key]:
@@ -304,16 +311,17 @@ class EnumDyField(BaseDynamicField):
                 elif _key == 'alert':
                     _state_options = {'text_color': 'red.500', 'icon': {'color': 'red.500'}}
 
-                _options_dic[_state] = StateItemDyField.set(_state_options)
+                _options_item_dic[_state] = StateItemDyField.set(_state_options)
 
-        _data_source.update({'options': _options_dic})
+        _enum_options = {'items': _options_item_dic}
 
         if 'options' in kwargs:
-            _data_source.update({'options': kwargs.get('options')})
+            _enum_options.update(kwargs.get('options'))
 
         if 'reference' in kwargs:
             _data_source.update({'reference': kwargs.get('reference')})
 
+        _data_source.update({'options': EnumOptionDyField(_enum_options)})
         return cls(_data_source)
 
 
@@ -343,3 +351,50 @@ class SizeField(BaseDynamicField):
             _data_source.update({'options': kwargs.get('options')})
 
         return cls(_data_source)
+
+
+class SearchEnumField(Model):
+    label = StringType(serialize_when_none=False)
+    icon = ModelType(Icon, serialize_when_none=False)
+
+    @classmethod
+    def set_field(cls, label=None, icon=None):
+        return_dic = {}
+
+        if label is not None:
+            return_dic.update({'label': label})
+
+        if icon is not None:
+            return_dic.update({'icon': Icon(icon)})
+
+        return cls(return_dic)
+
+
+class SearchField(BaseDynamicSearch):
+    enums = DictType(ModelType(SearchEnumField), serialize_when_none=False)
+    reference = StringType(serialize_when_none=False)
+
+    @classmethod
+    def set(cls, name='', key='', data_type=None, enums=None, reference=None):
+        return_dic = {
+            'name': name,
+            'key': key
+        }
+
+        if data_type is not None:
+            return_dic.update({'data_type': data_type})
+
+        if reference is not None:
+            return_dic.update({'reference': reference})
+
+        if enums is not None:
+            convert_enums = {}
+            for enum_key in enums:
+                enum_v = enums[enum_key]
+                convert_enums[enum_key] = SearchEnumField.set_field(**enum_v)
+
+            return_dic.update({
+                'enums': convert_enums
+            })
+
+        return cls(return_dic)

@@ -37,5 +37,8 @@ setup(
         'boto3',
         'schematics'
     ],
+    package_data={
+        'spaceone': ['inventory/manager/metadata/widget/*.yaml']
+    },
     zip_safe=False,
 )

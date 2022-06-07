@@ -77,8 +77,12 @@ class MetadataManager(BaseManager):
                     'is_optional': True
                 }),
                 TextDyField.data_source('Primary IP', 'data.primary_ip_address'),
-                TextDyField.data_source('Public IP', 'data.nics.public_ip_address'),
-                TextDyField.data_source('Public DNS', 'data.nics.tags.public_dns', options={
+                ListDyField.data_source('Public DNS', 'data.nics', options={
+                    'sub_key': 'tags.public_dns',
+                    'is_optional': True
+                }),
+                ListDyField.data_source('Public IP', 'data.nics', options={
+                    'sub_key': 'public_ip_address',
                     'is_optional': True
                 }),
                 TextDyField.data_source('All IP', 'ip_addresses', options={
@@ -362,16 +366,16 @@ class MetadataManager(BaseManager):
             EnumDyField.data_source('Termination Protection', 'data.aws.termination_protection', default_badge={
                 'indigo.500': ['true'], 'coral.600': ['false']
             }),
-            ListDyField.data_source('Public DNS', 'nics',
-                                    default_badge={'type': 'outline', 'sub_key': 'tags.public_dns'}),
-            ListDyField.data_source('Public IP', 'nics',
-                                    default_badge={'type': 'outline', 'sub_key': 'public_ip_address'}),
-            ListDyField.data_source('Security Groups', 'data.compute.security_groups',
-                                    default_badge={'type': 'outline', 'delimiter': '<br>', 'sub_key': 'display'},
-                                    reference={
-                                        'resource_type': 'inventory.CloudService',
-                                        'reference_key': 'data.group_id'
-                                    }),
+            ListDyField.data_source('Public DNS', 'data.nics', options={
+                'sub_key': 'tags.public_dns'}),
+            ListDyField.data_source('Public IP', 'data.nics', options={
+                'sub_key': 'public_ip_address'}),
+            ListDyField.data_source('Security Groups', 'data.compute.security_groups', options={
+                'delimiter': '<br>', 'sub_key': 'display'
+            }, reference={
+                'resource_type': 'inventory.CloudService',
+                'reference_key': 'data.group_id'
+            }),
             TextDyField.data_source('Account ID', 'data.compute.account'),
             DateTimeDyField.data_source('Launched At', 'data.compute.launched_at'),
         ])
@@ -434,7 +438,7 @@ class MetadataManager(BaseManager):
 
         ec2 = ListDynamicLayout.set_layouts('AWS EC2', layouts=[ec2_instance, ec2_os, ec2_hw, ec2_vpc, ec2_asg])
 
-        disk = TableDynamicLayout.set_fields('Disk', root_path='disks', fields=[
+        disk = TableDynamicLayout.set_fields('Disk', root_path='data.disks', fields=[
             TextDyField.data_source('Index', 'device_index'),
             TextDyField.data_source('Name', 'device'),
             SizeField.data_source('Size(GB)', 'size', options={
@@ -450,7 +454,7 @@ class MetadataManager(BaseManager):
             }),
         ])
 
-        nic = TableDynamicLayout.set_fields('NIC', root_path='nics', fields=[
+        nic = TableDynamicLayout.set_fields('NIC', root_path='data.nics', fields=[
             TextDyField.data_source('Index', 'device_index'),
             TextDyField.data_source('MAC Address', 'mac_address'),
             ListDyField.data_source('IP Addresses', 'ip_addresses', options={'delimiter': '<br>'}),

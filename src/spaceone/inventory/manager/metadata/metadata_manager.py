@@ -367,9 +367,11 @@ class MetadataManager(BaseManager):
                 'indigo.500': ['true'], 'coral.600': ['false']
             }),
             ListDyField.data_source('Public DNS', 'data.nics', options={
-                'sub_key': 'tags.public_dns'}),
+                'sub_key': 'tags.public_dns'
+            }),
             ListDyField.data_source('Public IP', 'data.nics', options={
-                'sub_key': 'public_ip_address'}),
+                'sub_key': 'public_ip_address'
+            }),
             ListDyField.data_source('Security Groups', 'data.compute.security_groups', options={
                 'delimiter': '<br>', 'sub_key': 'display'
             }, reference={

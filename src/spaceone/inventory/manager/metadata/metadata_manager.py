@@ -28,7 +28,9 @@ class MetadataManager(BaseManager):
     def get_cloud_service_type_metadata():
         metadata = CloudServiceTypeMetadata.set_meta(
             fields=[
-                TextDyField.data_source('Server ID', 'server_id'),
+                TextDyField.data_source('Cloud Service ID', 'cloud_service_id', options={
+                    'is_optional': True
+                }),
                 TextDyField.data_source('Name', 'name'),
                 TextDyField.data_source('Resource ID', 'reference.resource_id'),
                 EnumDyField.data_source('Management State', 'state', default_state={

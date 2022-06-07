@@ -78,16 +78,16 @@ class MetadataManager(BaseManager):
                 }),
                 TextDyField.data_source('Primary IP', 'data.primary_ip_address'),
                 TextDyField.data_source('Public IP', 'data.nics.public_ip_address'),
-                TextDyField.data_source('Public DNS', 'data.tags.public_dns', options={
+                TextDyField.data_source('Public DNS', 'data.nics.tags.public_dns', options={
                     'is_optional': True
                 }),
                 TextDyField.data_source('All IP', 'ip_addresses', options={
                     'is_optional': True
                 }),
-                TextDyField.data_source('MAC Address', 'nics.mac_address', options={
+                TextDyField.data_source('MAC Address', 'data.nics.mac_address', options={
                     'is_optional': True
                 }),
-                TextDyField.data_source('CIDR', 'nics.cidr', options={
+                TextDyField.data_source('CIDR', 'data.nics.cidr', options={
                     'is_optional': True
                 }),
                 TextDyField.data_source('VPC ID', 'data.vpc.vpc_id', options={

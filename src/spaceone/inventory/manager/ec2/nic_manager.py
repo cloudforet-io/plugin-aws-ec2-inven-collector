@@ -1,5 +1,5 @@
 from spaceone.core.manager import BaseManager
-from spaceone.inventory.model.nic import NIC
+from spaceone.inventory.model.nic import NIC, NICTags
 
 
 class NICManager(BaseManager):
@@ -26,6 +26,11 @@ class NICManager(BaseManager):
 
         nics = []
         for net_inf in network_interfaces:
+            nic_tag_obj = NICTags({
+                'public_dns': net_inf.get('Association', {}).get('PublicDnsName', ''),
+                'eni_id': net_inf.get('NetworkInterfaceId', '')
+            }, strict=False)
+
             nic_data = {
                 'ip_addresses': self.get_private_ips(net_inf.get('PrivateIpAddresses', [])),
                 'device': self.get_device(net_inf),
@@ -33,10 +38,7 @@ class NICManager(BaseManager):
                 'cidr': subnet_vo.cidr,
                 'mac_address': net_inf.get('MacAddress'),
                 'public_ip_address': net_inf.get('Association', {}).get('PublicIp', ''),
-                'tags': {
-                    'public_dns': net_inf.get('Association', {}).get('PublicDnsName', ''),
-                    'eni_id': net_inf.get('NetworkInterfaceId', '')
-                }
+                'tags': nic_tag_obj
             }
 
             if 'Attachment' in net_inf and 'DeviceIndex' in net_inf.get('Attachment'):

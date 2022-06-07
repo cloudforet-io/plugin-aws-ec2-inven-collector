@@ -103,10 +103,12 @@ class MetadataManager(BaseManager):
                 TextDyField.data_source('Subnet Name', 'data.subnet.subnet_name', options={
                     'is_optional': True
                 }),
-                TextDyField.data_source('ELB Name', 'data.load_balancers.name', options={
+                ListDyField.data_source('ELB Name', 'data.load_balancer', options={
+                    'sub_key': 'name',
                     'is_optional': True
                 }),
-                TextDyField.data_source('ELB DNS', 'data.load_balancers.dns', options={
+                ListDyField.data_source('ELB DNS', 'data.load_balancer', options={
+                    'sub_key': 'endpoint',
                     'is_optional': True
                 }),
                 TextDyField.data_source('IAM Role ARN', 'data.aws.iam_instance_profile.arn', options={
@@ -367,9 +369,11 @@ class MetadataManager(BaseManager):
                 'indigo.500': ['true'], 'coral.600': ['false']
             }),
             ListDyField.data_source('Public DNS', 'data.nics', options={
-                'sub_key': 'tags.public_dns'}),
+                'sub_key': 'tags.public_dns'
+            }),
             ListDyField.data_source('Public IP', 'data.nics', options={
-                'sub_key': 'public_ip_address'}),
+                'sub_key': 'public_ip_address'
+            }),
             ListDyField.data_source('Security Groups', 'data.compute.security_groups', options={
                 'delimiter': '<br>', 'sub_key': 'display'
             }, reference={
@@ -389,13 +393,7 @@ class MetadataManager(BaseManager):
             }),
             TextDyField.data_source('OS Architecture', 'data.os.os_arch', options={
                 'translation_id': 'PAGE_SCHEMA.OS_ARCH',
-            }),
-            TextDyField.data_source('OS Version Details', 'data.os.details', options={
-                'translation_id': 'PAGE_SCHEMA.OS_DETAILS',
-            }),
-            TextDyField.data_source('OS License', 'data.os.os_license', options={
-                'translation_id': 'PAGE_SCHEMA.OS_LICENSE',
-            }),
+            })
         ])
 
         ec2_hw = ItemDynamicLayout.set_fields('Hardware', fields=[

@@ -56,9 +56,6 @@ class MetadataManager(BaseManager):
                 TextDyField.data_source('Image', 'data.compute.image', options={
                     'is_optional': True
                 }),
-                TextDyField.data_source('Image', 'data.compute.image', options={
-                    'is_optional': True
-                }),
                 EnumDyField.data_source('Instance State', 'data.compute.instance_state', default_state={
                     'safe': ['RUNNING'],
                     'warning': ['PENDING', 'REBOOTING', 'SHUTTING-DOWN', 'STOPPING', 'STARTING',

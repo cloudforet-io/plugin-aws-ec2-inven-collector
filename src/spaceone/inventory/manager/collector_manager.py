@@ -132,8 +132,8 @@ class CollectorManager(BaseManager):
                         'vpc': vpc_vo,
                         'subnet': subnet_vo,
                         'cloudwatch': {
-                            'AWS/EC2': {'DEFAULT': {'Name': 'InstanceId', 'Value': instance_id}},
-                            'CWAgent': {'DEFAULT': {'Name': 'InstanceId', 'Value': instance_id}}
+                            'AWS/EC2': {'DEFAULT': [{'Name': 'InstanceId', 'Value': instance_id}]},
+                            'CWAgent': {'DEFAULT': [{'Name': 'InstanceId', 'Value': instance_id}]}
                         }
                     })
 

@@ -62,7 +62,6 @@ class CollectorManager(BaseManager):
             nic_manager: NICManager = NICManager(params)
             vpc_manager: VPCManager = VPCManager(params)
             sg_manager: SecurityGroupManager = SecurityGroupManager(params)
-            cw_manager: CloudWatchManager = CloudWatchManager(params)
 
             # Instance Type
             itypes = ec2_connector.list_instance_types()
@@ -118,7 +117,6 @@ class CollectorManager(BaseManager):
                     sg_ids = [security_group.get('GroupId') for security_group in instance.get('SecurityGroups', []) if
                               security_group.get('GroupId') is not None]
                     sg_rules_vos = sg_manager.get_security_group_info(sg_ids, sgs)
-                    cloudwatch_vo = cw_manager.get_cloudwatch_info(instance_id, params['region_name'])
 
                     server_data.update({
                         'region_code': params.get("region_name", ''),
@@ -133,7 +131,10 @@ class CollectorManager(BaseManager):
                         'security_group': sg_rules_vos,
                         'vpc': vpc_vo,
                         'subnet': subnet_vo,
-                        'cloudwatch': cloudwatch_vo
+                        'cloudwatch': {
+                            'AWS/EC2': {'DEFAULT': {'Name': 'InstanceId', 'Value': instance_id}},
+                            'CWAgent': {'DEFAULT': {'Name': 'InstanceId', 'Value': instance_id}}
+                        }
                     })
 
                     if auto_scaling_group_vo:

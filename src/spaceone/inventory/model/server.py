@@ -1,5 +1,5 @@
 from schematics import Model
-from schematics.types import ModelType, ListType, StringType, PolyModelType, DateTimeType, FloatType
+from schematics.types import ModelType, ListType, StringType, PolyModelType, DateTimeType, FloatType, DictType, BaseType
 from spaceone.inventory.model import OS, AWS, Hardware, SecurityGroup, Compute, LoadBalancer, VPC, Subnet, \
     AutoScalingGroup, NIC, Disk, ServerMetadata, CloudWatch
 
@@ -30,7 +30,7 @@ class ServerData(Model):
     nics = ListType(ModelType(NIC))
     disks = ListType(ModelType(Disk))
     primary_ip_address = StringType(default='')
-    cloudwatch = ModelType(CloudWatch)
+    cloudwatch = DictType(BaseType)
 
 
 class Server(Model):

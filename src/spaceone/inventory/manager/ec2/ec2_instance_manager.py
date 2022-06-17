@@ -30,6 +30,7 @@ class EC2InstanceManager(BaseManager):
                     "os_details": "",
                 },
                 "aws": {
+                    "ami_id" : "",
                     "ebs_optimized": "",
                     "termination_protection": "true" | "false",
                     "iam_instance_profile": {
@@ -107,6 +108,7 @@ class EC2InstanceManager(BaseManager):
 
     def get_aws_data(self, instance):
         aws_data = {
+            'ami_id': instance.get('ImageId'),
             'termination_protection': self.get_termination_protection(instance.get('InstanceId')),
             'ebs_optimized': instance.get('EbsOptimized', False),
             'iam_instance_profile': instance.get('IamInstanceProfile'),

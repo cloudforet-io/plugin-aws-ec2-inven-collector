@@ -133,7 +133,9 @@ class CollectorManager(BaseManager):
                         'subnet': subnet_vo,
                         'cloudwatch': {
                             'AWS/EC2': {'DEFAULT': [{'Name': 'InstanceId', 'Value': instance_id}]},
-                            'CWAgent': {'DEFAULT': [{'Name': 'InstanceId', 'Value': instance_id}]}
+                            'CWAgent': {'DEFAULT': [{'Name': 'InstanceId', 'Value': instance_id},
+                                                    {'Name': 'InstanceType', 'Value': server_data['data']['compute']['instance_type']},
+                                                    {'Name': 'ImageId', 'Value': server_data['data']['aws']['ami_id']}]}
                         }
                     })
 

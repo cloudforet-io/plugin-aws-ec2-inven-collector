@@ -131,12 +131,7 @@ class CollectorManager(BaseManager):
                         'security_group': sg_rules_vos,
                         'vpc': vpc_vo,
                         'subnet': subnet_vo,
-                        'cloudwatch': {
-                            'AWS/EC2': {'DEFAULT': [{'Name': 'InstanceId', 'Value': instance_id}]},
-                            'CWAgent': {'DEFAULT': [{'Name': 'InstanceId', 'Value': instance_id},
-                                                    {'Name': 'InstanceType', 'Value': server_data['data']['compute']['instance_type']},
-                                                    {'Name': 'ImageId', 'Value': server_data['data']['aws']['ami_id']}]}
-                        }
+                        'cloudwatch': self.set_cloudwatch_info(instance_id, server_data)
                     })
 
                     if auto_scaling_group_vo:
@@ -211,6 +206,36 @@ class CollectorManager(BaseManager):
         }
         return [CloudServiceType(cloud_service_type, strict=False)]
 
+    @staticmethod
+    def set_cloudwatch_info(instance_id, server):
+        server_data = server['data']
+
+        _aws_ec2_default = [{'Name': 'InstanceId', 'Value': instance_id}]
+        _cwagent_default = [
+            {'Name': 'InstanceId', 'Value': instance_id}
+        ]
+        _cwagent_mem_used_percent = [
+            {'Name': 'InstanceId', 'Value': instance_id},
+            {'Name': 'InstanceType', 'Value': server_data['compute']['instance_type']},
+            {'Name': 'ImageId', 'Value': server_data['aws']['ami_id']}
+        ]
+        _cwagent_disk_used_percent = [
+            {'Name': 'InstanceId', 'Value': instance_id},
+            {'Name': 'InstanceType', 'Value': server_data['compute']['instance_type']},
+            {'Name': 'ImageId', 'Value': server_data['aws']['ami_id']},
+            {'Name': 'path', 'Value': '/'}
+        ]
+
+        return {
+            'AWS/EC2': {
+                'DEFAULT': _aws_ec2_default
+            },
+            'CWAgent': {
+                'DEFAULT': _cwagent_default,
+                'mem_used_percent': _cwagent_mem_used_percent,
+                'disk_used_percent': _cwagent_disk_used_percent
+            }
+        }
     @staticmethod
     def get_volume_ids(instance):
         block_device_mappings = instance.get('BlockDeviceMappings', [])

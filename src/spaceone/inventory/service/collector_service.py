@@ -81,7 +81,7 @@ class CollectorService(BaseService):
 
             for future in concurrent.futures.as_completed(future_executors):
                 for result in future.result():
-                    if result.resource_type == 'inventory.Server':
+                    if result.resource_type == 'inventory.CloudService':
                         try:
                             collected_region = self.collector_manager.get_region_from_result(result.resource)
 

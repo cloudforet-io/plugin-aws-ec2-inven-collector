@@ -130,8 +130,7 @@ class CollectorManager(BaseManager):
                         'load_balancer': load_balancer_vos,
                         'security_group': sg_rules_vos,
                         'vpc': vpc_vo,
-                        'subnet': subnet_vo,
-                        'cloudwatch': self.set_cloudwatch_info(instance_id, server_data)
+                        'subnet': subnet_vo
                     })
 
                     if auto_scaling_group_vo:
@@ -144,6 +143,7 @@ class CollectorManager(BaseManager):
                         'ip_addresses': self.merge_ip_addresses(server_data),
                     })
 
+                    server_data['data']['cloudwatch'] = self.set_cloudwatch_info(instance_id, server_data)
                     server_data['data']['compute']['account'] = account_id
                     server_data['account'] = account_id
 
@@ -194,20 +194,7 @@ class CollectorManager(BaseManager):
             total_resources.append(error_resource_response)
             return total_resources
 
-    @staticmethod
-    def list_cloud_service_types():
-        meta_manager: MetadataManager = MetadataManager()
-
-        cloud_service_type = {
-            '_metadata': meta_manager.get_cloud_service_type_metadata(),
-            'tags': {
-                'spaceone:icon': 'https://spaceone-custom-assets.s3.ap-northeast-2.amazonaws.com/console-assets/icons/aws-ec2.svg',
-            }
-        }
-        return [CloudServiceType(cloud_service_type, strict=False)]
-
-    @staticmethod
-    def set_cloudwatch_info(instance_id, server):
+    def set_cloudwatch_info(self, instance_id, server):
         server_data = server['data']
 
         _aws_ec2_default = [{'Name': 'InstanceId', 'Value': instance_id}]
@@ -223,8 +210,15 @@ class CollectorManager(BaseManager):
             {'Name': 'InstanceId', 'Value': instance_id},
             {'Name': 'InstanceType', 'Value': server_data['compute']['instance_type']},
             {'Name': 'ImageId', 'Value': server_data['aws']['ami_id']},
-            {'Name': 'path', 'Value': '/'}
         ]
+
+        if server_data['os']['os_type'] == 'LINUX':
+            _cwagent_disk_used_percent.append({'Name': 'path', 'Value': '/'})
+            _cwagent_disk_used_percent.append({'Name': 'fstype', 'Value': 'xfs'})
+
+            _device = self.get_device_for_cloudwatch(server_data['disks'])
+            if _device:
+                _cwagent_disk_used_percent.append({'Name': 'device', 'Value': _device})
 
         return {
             'AWS/EC2': {
@@ -236,6 +230,19 @@ class CollectorManager(BaseManager):
                 'disk_used_percent': _cwagent_disk_used_percent
             }
         }
+
+    @staticmethod
+    def list_cloud_service_types():
+        meta_manager: MetadataManager = MetadataManager()
+
+        cloud_service_type = {
+            '_metadata': meta_manager.get_cloud_service_type_metadata(),
+            'tags': {
+                'spaceone:icon': 'https://spaceone-custom-assets.s3.ap-northeast-2.amazonaws.com/console-assets/icons/aws-ec2.svg',
+            }
+        }
+        return [CloudServiceType(cloud_service_type, strict=False)]
+
     @staticmethod
     def get_volume_ids(instance):
         block_device_mappings = instance.get('BlockDeviceMappings', [])
@@ -245,6 +252,19 @@ class CollectorManager(BaseManager):
     def get_image_ids(instances):
         image_ids = [instance.get('ImageId') for instance in instances if instance.get('ImageId') is not None]
         return list(set(image_ids))
+
+    @staticmethod
+    def get_device_for_cloudwatch(disks):
+        try:
+            for _disk in disks:
+                _device = _disk.device
+                _device_name = _device.split('/')[-1]
+                if _device_name:
+                    return f'{_device_name}1'
+
+            return None
+        except Exception as e:
+            return None
 
     @staticmethod
     def merge_ip_addresses(server_data):

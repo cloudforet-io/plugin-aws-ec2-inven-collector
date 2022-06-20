@@ -5,7 +5,7 @@ from spaceone.inventory.model.server import Server
 from spaceone.inventory.model.region import Region
 
 class ErrorResource(Model):
-    resource_type = StringType(default='inventory.Server')
+    resource_type = StringType(default='inventory.CloudService')
     provider = StringType(default='aws')
     cloud_service_group = StringType(default='EC2')
     cloud_service_type = StringType(default='Instance')

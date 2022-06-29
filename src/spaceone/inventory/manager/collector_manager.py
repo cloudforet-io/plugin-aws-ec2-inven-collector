@@ -144,6 +144,7 @@ class CollectorManager(BaseManager):
                     })
 
                     server_data['data']['cloudwatch'] = self.set_cloudwatch_info(instance_id, server_data)
+                    server_data['data']['cloudtrail'] = self.set_cloudtrail_info(instance_id, server_data)
                     server_data['data']['compute']['account'] = account_id
                     server_data['account'] = account_id
 
@@ -229,6 +230,15 @@ class CollectorManager(BaseManager):
                 'mem_used_percent': _cwagent_mem_used_percent,
                 'disk_used_percent': _cwagent_disk_used_percent
             }
+        }
+
+    @staticmethod
+    def set_cloudtrail_info(instance_id, server):
+        return {
+            'region_name': server['region_code'],
+            'LookupAttributes': [
+                {'AttributeKey': 'ResourceName', 'AttributeValue': instance_id}
+            ]
         }
 
     @staticmethod

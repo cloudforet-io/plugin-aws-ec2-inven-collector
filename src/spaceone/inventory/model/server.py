@@ -30,7 +30,8 @@ class ServerData(Model):
     nics = ListType(ModelType(NIC))
     disks = ListType(ModelType(Disk))
     primary_ip_address = StringType(default='')
-    cloudwatch = DictType(BaseType)
+    cloudwatch = DictType(BaseType, default={})
+    cloudtrail = DictType(BaseType, default={})
 
 
 class Server(Model):

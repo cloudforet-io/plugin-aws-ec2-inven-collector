@@ -123,6 +123,7 @@ class CollectorManager(BaseManager):
 
                     server_data.update({
                         'region_code': region_name,
+                        'instance_type': server_data['data']['compute']['instance_type'],
                         'tags': instance.get('Tags', [])
                     })
 
@@ -143,7 +144,7 @@ class CollectorManager(BaseManager):
 
                     # IP addr : ip_addresses = nics.ip_addresses + data.public_ip_address
                     server_data.update({
-                        'ip_addresses': self.merge_ip_addresses(server_data),
+                        'ip_addresses': self.merge_ip_addresses(server_data)
                     })
 
                     server_data['data']['cloudwatch'] = self.set_cloudwatch_info(instance_id, server_data)

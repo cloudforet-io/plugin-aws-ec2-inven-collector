@@ -58,13 +58,14 @@ class CollectorManager(BaseManager):
         _LOGGER.debug(f'[list_instances] [{params["region_name"]}] INSTANCE COUNT : {len(instances)}')
 
         if instances:
-            ins_manager: EC2InstanceManager = EC2InstanceManager(params, ec2_connector=ec2_connector)
-            asg_manager: AutoScalingGroupManager = AutoScalingGroupManager(params)
-            elb_manager: LoadBalancerManager = LoadBalancerManager(params, ec2_connector=ec2_connector)
-            disk_manager: DiskManager = DiskManager(params)
-            nic_manager: NICManager = NICManager(params)
-            vpc_manager: VPCManager = VPCManager(params)
-            sg_manager: SecurityGroupManager = SecurityGroupManager(params)
+            ins_manager = EC2InstanceManager(params, ec2_connector=ec2_connector)
+            asg_manager = AutoScalingGroupManager(params)
+            elb_manager = LoadBalancerManager(params, ec2_connector=ec2_connector)
+            disk_manager = DiskManager(params)
+            nic_manager = NICManager(params)
+            vpc_manager = VPCManager(params)
+            sg_manager = SecurityGroupManager(params)
+            cw_manager = CloudWatchManager()
 
             # Instance Type
             itypes = ec2_connector.list_instance_types()
@@ -147,7 +148,7 @@ class CollectorManager(BaseManager):
                         'ip_addresses': self.merge_ip_addresses(server_data)
                     })
 
-                    server_data['data']['cloudwatch'] = self.set_cloudwatch_info(instance_id, server_data)
+                    server_data['data']['cloudwatch'] = cw_manager.set_cloudwatch_info(instance_id, region_name)
                     server_data['data']['cloudtrail'] = self.set_cloudtrail(region_name, cloudtrail_resource_type,
                                                                             instance_id)
                     server_data['data']['compute']['account'] = account_id
@@ -199,43 +200,6 @@ class CollectorManager(BaseManager):
 
             total_resources.append(error_resource_response)
             return total_resources
-
-    def set_cloudwatch_info(self, instance_id, server):
-        server_data = server['data']
-
-        _aws_ec2_default = [{'Name': 'InstanceId', 'Value': instance_id}]
-        _cwagent_default = [
-            {'Name': 'InstanceId', 'Value': instance_id}
-        ]
-        _cwagent_mem_used_percent = [
-            {'Name': 'InstanceId', 'Value': instance_id},
-            {'Name': 'InstanceType', 'Value': server_data['compute']['instance_type']},
-            {'Name': 'ImageId', 'Value': server_data['aws']['ami_id']}
-        ]
-        _cwagent_disk_used_percent = [
-            {'Name': 'InstanceId', 'Value': instance_id},
-            {'Name': 'InstanceType', 'Value': server_data['compute']['instance_type']},
-            {'Name': 'ImageId', 'Value': server_data['aws']['ami_id']},
-        ]
-
-        if server_data['os']['os_type'] == 'LINUX':
-            _cwagent_disk_used_percent.append({'Name': 'path', 'Value': '/'})
-            _cwagent_disk_used_percent.append({'Name': 'fstype', 'Value': 'xfs'})
-
-            _device = self.get_device_for_cloudwatch(server_data['disks'])
-            if _device:
-                _cwagent_disk_used_percent.append({'Name': 'device', 'Value': _device})
-
-        return {
-            'AWS/EC2': {
-                'DEFAULT': _aws_ec2_default
-            },
-            'CWAgent': {
-                'DEFAULT': _cwagent_default,
-                'mem_used_percent': _cwagent_mem_used_percent,
-                'disk_used_percent': _cwagent_disk_used_percent
-            }
-        }
 
     @staticmethod
     def set_cloudtrail(region_name, resource_type, resource_name):

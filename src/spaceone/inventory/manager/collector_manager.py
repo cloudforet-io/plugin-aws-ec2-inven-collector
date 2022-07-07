@@ -10,6 +10,7 @@ from spaceone.inventory.manager.ec2 import EC2InstanceManager, AutoScalingGroupM
 from spaceone.inventory.manager.metadata.metadata_manager import MetadataManager
 from spaceone.inventory.model.server import Server, ReferenceModel
 from spaceone.inventory.model.region import Region
+from spaceone.inventory.model.cloudtrail import CloudTrail
 from spaceone.inventory.model.cloud_service_type import CloudServiceType
 from spaceone.inventory.model.resource import ErrorResourceResponse, ServerResourceResponse
 from spaceone.inventory.conf.cloud_service_conf import *
@@ -44,6 +45,8 @@ class CollectorManager(BaseManager):
         ec2_connector: EC2Connector = self.locator.get_connector('EC2Connector')
         ec2_connector.set_client(params['secret_data'], params['region_name'])
         meta_manager: MetadataManager = MetadataManager()
+        region_name = params.get("region_name", '')
+        cloudtrail_resource_type = 'AWS::EC2::Instance'
 
         instance_filter = {}
         # Instance list and account ID
@@ -110,7 +113,7 @@ class CollectorManager(BaseManager):
 
                     disk_vos = disk_manager.get_disk_info(self.get_volume_ids(instance), volumes)
                     vpc_vo, subnet_vo = vpc_manager.get_vpc_info(instance.get('VpcId'), instance.get('SubnetId'),
-                                                                 vpcs, subnets, params['region_name'])
+                                                                 vpcs, subnets, region_name)
 
                     nic_vos = nic_manager.get_nic_info(instance.get('NetworkInterfaces'), subnet_vo)
 
@@ -119,7 +122,7 @@ class CollectorManager(BaseManager):
                     sg_rules_vos = sg_manager.get_security_group_info(sg_ids, sgs)
 
                     server_data.update({
-                        'region_code': params.get("region_name", ''),
+                        'region_code': region_name,
                         'tags': instance.get('Tags', [])
                     })
 
@@ -144,7 +147,8 @@ class CollectorManager(BaseManager):
                     })
 
                     server_data['data']['cloudwatch'] = self.set_cloudwatch_info(instance_id, server_data)
-                    server_data['data']['cloudtrail'] = self.set_cloudtrail_info(instance_id, server_data)
+                    server_data['data']['cloudtrail'] = self.set_cloudtrail(region_name, cloudtrail_resource_type,
+                                                                            instance_id)
                     server_data['data']['compute']['account'] = account_id
                     server_data['account'] = account_id
 
@@ -233,13 +237,18 @@ class CollectorManager(BaseManager):
         }
 
     @staticmethod
-    def set_cloudtrail_info(instance_id, server):
-        return {
-            'region_name': server['region_code'],
+    def set_cloudtrail(region_name, resource_type, resource_name):
+        cloudtrail = {
             'LookupAttributes': [
-                {'AttributeKey': 'ResourceName', 'AttributeValue': instance_id}
-            ]
+                {
+                    "AttributeKey": "ResourceName",
+                    "AttributeValue": resource_name,
+                }
+            ],
+            'region_name': region_name,
+            'resource_type': resource_type
         }
+        return CloudTrail(cloudtrail, strict=False)
 
     @staticmethod
     def list_cloud_service_types():

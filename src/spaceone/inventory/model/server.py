@@ -1,7 +1,7 @@
 from schematics import Model
 from schematics.types import ModelType, ListType, StringType, PolyModelType, DateTimeType, FloatType, DictType, BaseType
 from spaceone.inventory.model import OS, AWS, Hardware, SecurityGroup, Compute, LoadBalancer, VPC, Subnet, \
-    AutoScalingGroup, NIC, Disk, ServerMetadata, CloudWatch
+    AutoScalingGroup, NIC, Disk, ServerMetadata, CloudWatch, CloudTrail
 
 
 class ReferenceModel(Model):
@@ -31,7 +31,7 @@ class ServerData(Model):
     disks = ListType(ModelType(Disk))
     primary_ip_address = StringType(default='')
     cloudwatch = DictType(BaseType, default={})
-    cloudtrail = DictType(BaseType, default={})
+    cloudtrail = ModelType(CloudTrail, serialize_when_none=False)
 
 
 class Server(Model):

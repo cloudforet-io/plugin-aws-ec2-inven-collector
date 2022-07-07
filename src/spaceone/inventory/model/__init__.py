@@ -10,6 +10,7 @@ from spaceone.inventory.model.security_group import SecurityGroup
 from spaceone.inventory.model.subnet import Subnet
 from spaceone.inventory.model.vpc import VPC
 from spaceone.inventory.model.cloudwatch import CloudWatch
+from spaceone.inventory.model.cloudtrail import CloudTrail
 
 # METADATA
 from spaceone.inventory.model.metadata.metadata import *

@@ -84,7 +84,7 @@ authentication privilege for followings:
             "Action": [
                 "autoscaling:Describe*",
                 "ec2:Describe*",
-                "elasticloadbalancing:Describe*",
+                "elasticloadbalancing:Describe*"
             ],
             "Effect": "Allow",
             "Resource": "*"

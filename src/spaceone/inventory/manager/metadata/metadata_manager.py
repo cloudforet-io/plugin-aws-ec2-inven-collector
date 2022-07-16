@@ -85,9 +85,6 @@ class MetadataManager(BaseManager):
                 TextDyField.data_source('ELB Name', 'data.load_balancer.name', options={
                     'is_optional': True
                 }),
-                TextDyField.data_source('ELB DNS', 'data.load_balancer.endpoint', options={
-                    'is_optional': True
-                }),
                 TextDyField.data_source('IAM Role ARN', 'data.aws.iam_instance_profile.arn', options={
                     'is_optional': True
                 }),

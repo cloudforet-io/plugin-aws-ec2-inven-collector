@@ -28,25 +28,9 @@ class MetadataManager(BaseManager):
     def get_cloud_service_type_metadata():
         metadata = CloudServiceTypeMetadata.set_meta(
             fields=[
-                TextDyField.data_source('Cloud Service ID', 'cloud_service_id', options={
-                    'is_optional': True
-                }),
-                EnumDyField.data_source('Management State', 'state', default_state={
-                    'safe': ['ACTIVE'], 'disable': ['DELETED']
-                }, options={'is_optional': True}),
                 TextDyField.data_source('Instance Type', 'data.compute.instance_type'),
                 TextDyField.data_source('Core', 'data.hardware.core'),
                 TextDyField.data_source('Memory', 'data.hardware.memory'),
-                TextDyField.data_source('Provider', 'provider', reference={
-                    'resource_type': 'identity.Provider',
-                    'reference_key': 'provider'
-                }),
-                TextDyField.data_source('Cloud Service Group', 'cloud_service_group', options={
-                    'is_optional': True
-                }),
-                TextDyField.data_source('Cloud Service Type', 'cloud_service_type', options={
-                    'is_optional': True
-                }),
                 TextDyField.data_source('Instance ID', 'data.compute.instance_id', options={
                     'is_optional': True
                 }),
@@ -218,36 +202,7 @@ class MetadataManager(BaseManager):
                                           'field_description': '(Daily Max)'
                                       }),
                 TextDyField.data_source('Account ID', 'account'),
-                TextDyField.data_source('Region', 'region_code',
-                                        options={'is_optional': True},
-                                        reference={'resource_type': 'inventory.Region',
-                                                   'reference_key': 'region_code'}),
-                TextDyField.data_source('Project', 'project_id',
-                                        options={'sortable': False},
-                                        reference={'resource_type': 'identity.Project',
-                                                   'reference_key': 'project_id'}),
-                TextDyField.data_source('Service Accounts', 'collection_info.service_accounts',
-                                        options={'is_optional': True},
-                                        reference={'resource_type': 'identity.ServiceAccount',
-                                                   'reference_key': 'service_account_id'}),
-                TextDyField.data_source('Secrets', 'collection_info.secrets',
-                                        options={'is_optional': True},
-                                        reference={'resource_type': 'secret.Secret',
-                                                   'reference_key': 'secret_id'}),
-                TextDyField.data_source('Collectors', 'collection_info.collectors',
-                                        options={'is_optional': True},
-                                        reference={'resource_type': 'inventory.Collector',
-                                                   'reference_key': 'collector_id'}),
                 TextDyField.data_source('Launched', 'launched_at', options={'is_optional': True}),
-                DateTimeDyField.data_source('Last Collected', 'updated_at', options={'source_type': "iso8601"}),
-                DateTimeDyField.data_source('Created', 'created_at', options={
-                    'source_type': "iso8601",
-                    'is_optional': True
-                }),
-                DateTimeDyField.data_source('Deleted', 'deleted_at', options={
-                    'source_type': "iso8601",
-                    'is_optional': True
-                })
             ],
             search=[
                 SearchField.set(name='IP Address', key='ip_addresses'),

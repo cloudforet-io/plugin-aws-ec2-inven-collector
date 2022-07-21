@@ -28,6 +28,13 @@ class MetadataManager(BaseManager):
     def get_cloud_service_type_metadata():
         metadata = CloudServiceTypeMetadata.set_meta(
             fields=[
+                EnumDyField.data_source('Instance State', 'data.compute.instance_state', default_state={
+                    'safe': ['RUNNING'],
+                    'warning': ['PENDING', 'REBOOTING', 'SHUTTING-DOWN', 'STOPPING', 'STARTING',
+                                'PROVISIONING', 'STAGING', 'DEALLOCATING', 'REPAIRING'],
+                    'alert': ['STOPPED', 'DEALLOCATED', 'SUSPENDED'],
+                    'disable': ['TERMINATED']
+                }),
                 TextDyField.data_source('Instance Type', 'data.compute.instance_type'),
                 TextDyField.data_source('Core', 'data.hardware.core'),
                 TextDyField.data_source('Memory', 'data.hardware.memory'),
@@ -40,13 +47,6 @@ class MetadataManager(BaseManager):
                 TextDyField.data_source('Image', 'data.compute.image', options={
                     'is_optional': True
                 }),
-                EnumDyField.data_source('Instance State', 'data.compute.instance_state', default_state={
-                    'safe': ['RUNNING'],
-                    'warning': ['PENDING', 'REBOOTING', 'SHUTTING-DOWN', 'STOPPING', 'STARTING',
-                                'PROVISIONING', 'STAGING', 'DEALLOCATING', 'REPAIRING'],
-                    'alert': ['STOPPED', 'DEALLOCATED', 'SUSPENDED'],
-                    'disable': ['TERMINATED']
-                }, options={'is_optional': True}),
                 TextDyField.data_source('Availability Zone', 'data.compute.az'),
                 TextDyField.data_source('OS Type', 'data.os.os_type', options={
                     'is_optional': True

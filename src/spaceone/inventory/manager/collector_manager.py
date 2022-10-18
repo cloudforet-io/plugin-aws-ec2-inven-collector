@@ -14,6 +14,7 @@ from spaceone.inventory.model.cloudtrail import CloudTrail
 from spaceone.inventory.model.cloud_service_type import CloudServiceType
 from spaceone.inventory.model.resource import ErrorResourceResponse, ServerResourceResponse
 from spaceone.inventory.conf.cloud_service_conf import *
+from spaceone.inventory.libs.utils import convert_tags
 
 
 _LOGGER = logging.getLogger(__name__)
@@ -125,7 +126,7 @@ class CollectorManager(BaseManager):
                     server_data.update({
                         'region_code': region_name,
                         'instance_type': server_data['data']['compute']['instance_type'],
-                        'tags': instance.get('Tags', [])
+                        'tags': convert_tags(instance.get('Tags', []))
                     })
 
                     server_data['data'].update({

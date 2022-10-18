@@ -112,8 +112,7 @@ class EC2InstanceManager(BaseManager):
             'termination_protection': self.get_termination_protection(instance.get('InstanceId')),
             'ebs_optimized': instance.get('EbsOptimized', False),
             'iam_instance_profile': instance.get('IamInstanceProfile'),
-            'lifecycle': instance.get('InstanceLifecycle', 'scheduled'),
-            'tags': instance.get('Tags', [])
+            'lifecycle': instance.get('InstanceLifecycle', 'scheduled')
         }
 
         return AWS(aws_data, strict=False)

@@ -391,9 +391,4 @@ class MetadataManager(BaseManager):
             }),
         ])
 
-        tags = TableDynamicLayout.set_fields('AWS Tags', root_path='data.aws.tags', fields=[
-            TextDyField.data_source('Key', 'key'),
-            TextDyField.data_source('Value', 'value'),
-        ])
-
-        return ServerMetadata.set_layouts([ec2, tags, disk, nic, security_group, elb])
+        return ServerMetadata.set_layouts([ec2, disk, nic, security_group, elb])

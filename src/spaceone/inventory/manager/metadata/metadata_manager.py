@@ -198,8 +198,7 @@ class MetadataManager(BaseManager):
                                           'is_optional': True,
                                           'field_description': '(Daily Max)'
                                       }),
-                TextDyField.data_source('Account ID', 'account'),
-                TextDyField.data_source('Launched', 'launched_at', options={'is_optional': True}),
+                TextDyField.data_source('Account ID', 'account')
             ],
             search=[
                 SearchField.set(name='IP Address', key='ip_addresses'),
@@ -227,7 +226,6 @@ class MetadataManager(BaseManager):
                 SearchField.set(name='Account ID', key='account'),
                 SearchField.set(name='Cloud Service Group', key='cloud_service_group'),
                 SearchField.set(name='Cloud Service Type', key='cloud_service_type'),
-                SearchField.set(name='Launched', key='launched_at'),
                 SearchField.set(name='Last Collected', key='updated_at', data_type='datetime'),
             ],
             widget=[

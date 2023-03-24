@@ -7,7 +7,7 @@ query:
     - group:
         keys:
           - name: name
-            key: region_code
+            key: instance_type
         fields:
           - name: value
             operator: count
@@ -15,6 +15,3 @@ options:
   chart_type: TREEMAP
   name_options:
     key: name
-    reference:
-      resource_type: inventory.Region
-      reference_key: region_code

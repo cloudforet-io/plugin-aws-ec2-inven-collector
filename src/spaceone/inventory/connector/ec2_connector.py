@@ -8,6 +8,8 @@ from botocore.config import Config
 from spaceone.core.error import *
 from spaceone.core import utils
 from spaceone.core.connector import BaseConnector
+from spaceone.inventory.conf.cloud_service_conf import *
+
 
 _LOGGER = logging.getLogger(__name__)
 DEFAULT_REGION = 'us-east-1'
@@ -40,7 +42,7 @@ class EC2Connector(BaseConnector):
             client = resource.meta.client
         else:
             resource = None
-            client = session.client(service, region_name=region_name)
+            client = session.client(service, region_name=region_name, verify=BOTO3_HTTPS_VERIFIED)
         return client, resource
 
     def get_session(self, secret_data, region_name):
@@ -54,7 +56,7 @@ class EC2Connector(BaseConnector):
 
         # ASSUME ROLE
         if role_arn := secret_data.get('role_arn'):
-            sts = session.client('sts')
+            sts = session.client('sts', verify=BOTO3_HTTPS_VERIFIED)
 
             _assume_role_request = {
                 'RoleArn': role_arn,
@@ -81,9 +83,9 @@ class EC2Connector(BaseConnector):
         config = Config(retries={'max_attempts': DEFAULT_API_RETRIES})
 
         self.session = self.get_session(secret_data, region_name)
-        self.ec2_client = self.session.client('ec2', config=config)
-        self.asg_client = self.session.client('autoscaling', config=config)
-        self.elbv2_client = self.session.client('elbv2', config=config)
+        self.ec2_client = self.session.client('ec2', config=config, verify=BOTO3_HTTPS_VERIFIED)
+        self.asg_client = self.session.client('autoscaling', config=config, verify=BOTO3_HTTPS_VERIFIED)
+        self.elbv2_client = self.session.client('elbv2', config=config, verify=BOTO3_HTTPS_VERIFIED)
 
     def list_regions(self, **query):
         query = self._generate_query(is_paginate=False, **query)
@@ -252,14 +254,14 @@ class EC2Connector(BaseConnector):
         session = boto3.Session(aws_access_key_id=aws_access_key_id,
                                 aws_secret_access_key=aws_secret_access_key)
 
-        sts = session.client('sts')
+        sts = session.client('sts', verify=BOTO3_HTTPS_VERIFIED)
         sts.get_caller_identity()
         return session
 
     def _create_session_with_assume_role(self, aws_access_key_id, aws_secret_access_key, role_arn):
         session = self._create_session_with_access_key(aws_access_key_id, aws_secret_access_key)
 
-        sts = session.client('sts')
+        sts = session.client('sts', verify=BOTO3_HTTPS_VERIFIED)
         assume_role_object = sts.assume_role(RoleArn=role_arn, RoleSessionName=utils.generate_id('AssumeRoleSession'))
         credentials = assume_role_object['Credentials']
 

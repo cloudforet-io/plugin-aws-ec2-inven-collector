@@ -46,6 +46,11 @@ class EC2Connector(BaseConnector):
         return client, resource
 
     def get_session(self, secret_data, region_name):
+        _LOGGER.debug("------")
+        _LOGGER.debug(secret_data)
+        _LOGGER.debug(region_name)
+        _LOGGER.debug("------")
+
         params = {
             'aws_access_key_id': secret_data['aws_access_key_id'],
             'aws_secret_access_key': secret_data['aws_secret_access_key'],

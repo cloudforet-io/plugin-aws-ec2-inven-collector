@@ -22,8 +22,8 @@ _LOGGER = logging.getLogger(__name__)
 
 class CollectorManager(BaseManager):
 
-    def __init__(self, transaction):
-        super().__init__(transaction)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
     def verify(self, secret_data, region_name):
         """ Check connection

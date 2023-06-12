@@ -23,7 +23,7 @@ DEFAULT_API_RETRIES = 10
 
 class EC2Connector(BaseConnector):
 
-    def __init__(self, transaction=None, config=None):
+    def __init__(self, *args, **kwargs):
         self.session = None
         self.ec2_client = None
         self.asg_client = None

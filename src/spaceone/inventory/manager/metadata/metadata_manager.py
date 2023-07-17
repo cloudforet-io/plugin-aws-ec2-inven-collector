@@ -41,6 +41,9 @@ class MetadataManager(BaseManager):
                 TextDyField.data_source('Instance ID', 'data.compute.instance_id', options={
                     'is_optional': True
                 }),
+                TextDyField.data_source('Root Volume Type', 'data.aws.root_volume_type', options={
+                    'is_optional': True
+                }),
                 TextDyField.data_source('Key Pair', 'data.compute.keypair', options={
                     'is_optional': True
                 }),
@@ -48,6 +51,12 @@ class MetadataManager(BaseManager):
                     'is_optional': True
                 }),
                 TextDyField.data_source('Availability Zone', 'data.compute.az'),
+                TextDyField.data_source('Termination Protection', 'data.aws.termination_protection', options={
+                    'is_optional': True
+                }),
+                TextDyField.data_source('Auto Recovery', 'data.aws.auto_recovery', options={
+                    'is_optional': True
+                }),
                 TextDyField.data_source('OS Type', 'data.os.os_type', options={
                     'is_optional': True
                 }),
@@ -210,6 +219,9 @@ class MetadataManager(BaseManager):
                 SearchField.set(name='Availability Zone', key='data.compute.az'),
                 SearchField.set(name='OS Type', key='data.os.os_type'),
                 SearchField.set(name='OS Architecture', key='data.os.os_arch'),
+                SearchField.set(name='Termination Protection', key='data.aws.termination_protection', data_type='boolean'),
+                SearchField.set(name='Auto Recovery', key='data.aws.auto_recovery'),
+                SearchField.set(name='Root Volume Type', key='data.aws.root_volume_type'),
                 SearchField.set(name='MAC Address', key='data.nics.mac_address'),
                 SearchField.set(name='Public IP Address', key='data.nics.public_ip_address'),
                 SearchField.set(name='Public DNS', key='data.nics.tags.public_dns'),
@@ -259,6 +271,9 @@ class MetadataManager(BaseManager):
             EnumDyField.data_source('EBS-Optimized', 'data.aws.ebs_optimized', default_badge={
                 'indigo.500': ['true'], 'coral.600': ['false']
             }),
+            TextDyField.data_source('Root Volume Type', 'data.aws.root_volume_type'),
+            TextDyField.data_source('Termination Protection', 'data.aws.termination_protection'),
+            TextDyField.data_source('Auto-Recovery Behavior', 'data.aws.auto_recovery'),
             TextDyField.data_source('AMI ID', 'data.compute.image'),
             TextDyField.data_source('Region', 'region_code'),
             TextDyField.data_source('Availability Zone', 'data.compute.az'),

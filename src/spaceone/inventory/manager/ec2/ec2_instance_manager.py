@@ -109,10 +109,32 @@ class EC2InstanceManager(BaseManager):
     def get_aws_data(self, instance):
         aws_data = {
             'ami_id': instance.get('ImageId'),
-            'termination_protection': self.get_termination_protection(instance.get('InstanceId')),
-            'ebs_optimized': instance.get('EbsOptimized', False),
+            'ami_launch_index': instance.get('AmiLaunchIndex'),
+            'kernel_id': instance.get('KernelId'),
+            'monitoring_state': instance.get('Monitoring', {}).get('State', ''),
+            'ebs_optimized': instance.get('EbsOptimized'),
+            'ena_support': instance.get('EnaSupport'),
+            'hypervisor': instance.get('Hypervisor'),
+            'placement': instance.get('Placement'),
             'iam_instance_profile': instance.get('IamInstanceProfile'),
-            'lifecycle': instance.get('InstanceLifecycle', 'scheduled')
+            'termination_protection': self.get_termination_protection(instance.get('InstanceId')),
+            'lifecycle': instance.get('InstanceLifecycle', 'scheduled'),
+            'auto_recovery': instance.get('MaintenanceOptions', {}).get('AutoRecovery'),
+            'boot_mode': instance.get('BootMode'),
+            'current_instance_boost': instance.get('CurrentInstanceBootMode'),
+            'tpm_support': instance.get('TpmSupport'),
+            'platform_details': instance.get('PlatformDetails'),
+            'usage_operation': instance.get('UsageOperation'),
+            'usage_operation_update_time': instance.get('UsageOperationUpdateTime'),
+            'enclave_options': instance.get('EnclaveOptions', {}).get('Enabled'),
+            'hibernation_options': instance.get('HibernationOptions', {}).get('Configured'),
+            'state_transition_reason': instance.get('StateTransitionReason'),
+            'source_desk_check': instance.get('SourceDestCheck'),
+            'sriov_net_support': instance.get('SriovNetSupport'),
+            'elastic_gpu_associations': instance.get('ElasticGpuAssociations'),
+            'elastic_inference_accelerator_associations': instance.get('ElasticInferenceAcceleratorAssociations'),
+            'capacity_reservation_id': instance.get('CapacityReservationId'),
+            'capacity_reservation_specification': instance.get('CapacityReservationSpecification')
         }
 
         return AWS(aws_data, strict=False)

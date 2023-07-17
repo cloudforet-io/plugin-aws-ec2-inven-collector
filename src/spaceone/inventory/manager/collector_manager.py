@@ -123,6 +123,9 @@ class CollectorManager(BaseManager):
                               security_group.get('GroupId') is not None]
                     sg_rules_vos = sg_manager.get_security_group_info(sg_ids, sgs)
 
+                    if disk_vos:
+                        server_data['data']['aws']['root_volume_type'] = disk_vos[0].get('tags', {}).get('volume_type')
+
                     server_data.update({
                         'region_code': region_name,
                         'instance_type': server_data['data']['compute']['instance_type'],

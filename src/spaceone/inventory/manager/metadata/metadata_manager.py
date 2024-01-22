@@ -64,7 +64,7 @@ class MetadataManager(BaseManager):
                 TextDyField.data_source('OS Architecture', 'data.os.os_arch', options={
                     'is_optional': True
                 }),
-                TextDyField.data_source('OS Details', 'data.os.os_details', options={
+                TextDyField.data_source('OS Details', 'data.os.details', options={
                     'is_optional': True
                 }),
                 TextDyField.data_source('Primary IP', 'data.primary_ip_address'),
@@ -221,7 +221,7 @@ class MetadataManager(BaseManager):
                 SearchField.set(name='Image', key='data.compute.image'),
                 SearchField.set(name='Availability Zone', key='data.compute.az'),
                 SearchField.set(name='OS Type', key='data.os.os_type'),
-                SearchField.set(name='OS Details', key='data.os.os_details'),
+                SearchField.set(name='OS Details', key='data.os.details'),
                 SearchField.set(name='OS Architecture', key='data.os.os_arch'),
                 SearchField.set(name='Termination Protection', key='data.aws.termination_protection', data_type='boolean'),
                 SearchField.set(name='Auto Recovery', key='data.aws.auto_recovery'),
@@ -304,7 +304,7 @@ class MetadataManager(BaseManager):
             TextDyField.data_source('OS Type', 'data.os.os_type', options={
                 'translation_id': 'PAGE_SCHEMA.OS_TYPE'
             }),
-            TextDyField.data_source('OS Details', 'data.os.os_details', options={
+            TextDyField.data_source('OS Details', 'data.os.details', options={
                 'translation_id': 'PAGE_SCHEMA.OS_DETAILS'
             }),
             TextDyField.data_source('OS Distribution', 'data.os.os_distro', options={

@@ -27,7 +27,7 @@ class EC2InstanceManager(BaseManager):
                     "os_distro": "",
                     "os_arch": "",
                     "os_type": "LINUX" | "WINDOWS",
-                    "os_details": "",
+                    "details": "",
                 },
                 "aws": {
                     "ami_id" : "",
@@ -102,7 +102,7 @@ class EC2InstanceManager(BaseManager):
             'os_distro': self.get_os_distro(image.get('Name', ''), os_type),
             'os_arch': image.get('Architecture', ''),
             'os_type': os_type,
-            'os_details': os_details
+            'details': os_details
         }
 
         return OS(os_data, strict=False)

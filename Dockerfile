@@ -1,7 +1,7 @@
-FROM cloudforet/python-core:1.12
+FROM cloudforet/python-core:2.0
 
 ENV PYTHONUNBUFFERED 1
-ENV SPACEONE_PORT 50051
+ENV CLOUDONE_PORT 50051
 ENV SERVER_TYPE grpc
 ENV PKG_DIR /tmp/pkg
 ENV SRC_DIR /tmp/src
@@ -13,12 +13,12 @@ RUN pip install --upgrade pip && \
     pip install --upgrade -r ${PKG_DIR}/pip_requirements.txt
 
 COPY src ${SRC_DIR}
-ARG CACHEBUST=1
+
 WORKDIR ${SRC_DIR}
 RUN python3 setup.py install && \
     rm -rf /tmp/*
 
-EXPOSE ${SPACEONE_PORT}
+EXPOSE ${CLOUDONE_PORT}
 
 ENTRYPOINT ["spaceone"]
-CMD ["grpc", "spaceone.inventory"]
+CMD ["run", "grpc-server", "spaceone.inventory"]

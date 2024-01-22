@@ -73,7 +73,7 @@ class EC2InstanceManager(BaseManager):
         match_image = self.match_image(instance.get('ImageId'), images)
 
         server_dic = self.get_server_dic(instance)
-        os_data = self.get_os_data(match_image, self.get_os_type(instance))
+        os_data = self.get_os_data(match_image, self.get_os_type(instance), self.get_os_details(instance))
         aws_data = self.get_aws_data(instance)
         hardware_data = self.get_hardware_data(instance, itypes)
         compute_data = self.get_compute_data(instance, match_image)
@@ -97,11 +97,12 @@ class EC2InstanceManager(BaseManager):
         }
         return server_data
 
-    def get_os_data(self, image, os_type):
+    def get_os_data(self, image, os_type, os_details):
         os_data = {
             'os_distro': self.get_os_distro(image.get('Name', ''), os_type),
             'os_arch': image.get('Architecture', ''),
             'os_type': os_type,
+            'os_details': os_details
         }
 
         return OS(os_data, strict=False)
@@ -227,6 +228,10 @@ class EC2InstanceManager(BaseManager):
     @staticmethod
     def get_os_type(instance):
         return instance.get('Platform', 'LINUX').upper()
+
+    @staticmethod
+    def get_os_details(instance):
+        return instance.get('PlatformDetails', 'Linux/UNIX')
 
     @staticmethod
     def extract_os_distro(image_name, os_type):

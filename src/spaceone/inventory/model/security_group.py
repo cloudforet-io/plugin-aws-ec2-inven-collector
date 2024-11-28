@@ -1,5 +1,5 @@
 from schematics import Model
-from schematics.types import StringType, IntType
+from schematics.types import StringType, IntType, ListType
 
 
 class SecurityGroup(Model):
@@ -14,3 +14,4 @@ class SecurityGroup(Model):
     description = StringType(default="")
     direction = StringType(choices=("inboud", "outbound"))
     port = StringType(serialize_when_none=False)
+    vulnerable_ports = ListType(IntType)

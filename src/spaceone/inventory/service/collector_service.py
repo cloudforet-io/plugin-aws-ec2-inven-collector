@@ -23,11 +23,26 @@ class CollectorService(BaseService):
     def init(self, params):
         """ init plugin by options
         """
+        options_schema =  \
+            {
+                "required": ["vulnerable_ports"],
+                "type": "object",
+                "properties": {
+                    "vulnerable_ports": {
+                        "title": "Vulnerable Ports Option",
+                        "type": "string",
+                        "default": DEFAULT_VULNERABLE_PORTS,
+                        "description": "Ex) 22,8080,3306 (Default = 22,3306)",
+                    }
+                },
+            }
+
         capability = {
             'filter_format': FILTER_FORMAT,
             'supported_resource_type': SUPPORTED_RESOURCE_TYPE,
             'supported_features': SUPPORTED_FEATURES,
-            'supported_schedules': SUPPORTED_SCHEDULES
+            'supported_schedules': SUPPORTED_SCHEDULES,
+            "options_schema": options_schema,
         }
         return {'metadata': capability}
 
@@ -115,12 +130,15 @@ class CollectorService(BaseService):
 
         target_regions = self.get_all_regions(params['secret_data'], filter_region_name)
 
+        vulnerable_ports = params['options']['vulnerable_ports']
+
         for target_region in target_regions:
             params_for_regions.append({
                 'region_name': target_region,
                 'query': query,
                 'secret_data': params['secret_data'],
-                'instance_ids': instance_ids
+                'instance_ids': instance_ids,
+                'vulnerable_ports': vulnerable_ports,
             })
 
         return params_for_regions

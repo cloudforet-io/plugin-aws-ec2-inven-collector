@@ -1,6 +1,7 @@
 from spaceone.core.manager import BaseManager
-from spaceone.inventory.model.security_group import SecurityGroup
 
+from spaceone.inventory.error.custom import ERROR_VULNERABLE_PORTS
+from spaceone.inventory.model.security_group import SecurityGroup
 
 class SecurityGroupManager(BaseManager):
 
@@ -58,20 +59,24 @@ class SecurityGroupManager(BaseManager):
         return sg
 
     def set_sg_base_data(self, sg, direction, rule):
+        protocol = self._get_protocol(rule.get('IpProtocol'))
+
         sg_data = {
             'direction': direction,
-            'protocol': self._get_protocol(rule.get('IpProtocol')),
+            'protocol': protocol,
             'security_group_name': sg.get('GroupName', ''),
             'security_group_id': sg.get('GroupId'),
         }
 
         from_port, to_port, port = self._get_port(rule)
+        vulnerable_ports = self._get_vulnerable_ports(protocol, from_port, to_port, self.params['vulnerable_ports'])
 
         if from_port is not None:
             sg_data.update({
                 'port_range_min': from_port,
                 'port_range_max': to_port,
-                'port': port
+                'port': port,
+                'vulnerable_ports': vulnerable_ports
             })
 
         return sg_data
@@ -127,3 +132,18 @@ class SecurityGroupManager(BaseManager):
             return from_port, to_port, port
         else:
             return None, None, None
+
+    @staticmethod
+    def _get_vulnerable_ports(protocol, from_port, to_port, vulnerable_ports):
+        try:
+            ports = []
+
+            for port in map(str.strip, vulnerable_ports.split(',')):
+                target_port = int(port)
+                if protocol=='ALL' or (from_port <= target_port <= to_port):
+                    ports.append(target_port)
+
+            return ports
+        except Exception:
+            raise ERROR_VULNERABLE_PORTS(vulnerable_ports)
+

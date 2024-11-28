@@ -5,6 +5,7 @@ NUMBER_OF_CONCURRENT = 20
 DEFAULT_REGION = 'us-east-1'
 FILTER_FORMAT = []
 BOTO3_HTTPS_VERIFIED = None
+DEFAULT_VULNERABLE_PORTS = "22,3306"
 
 REGION_INFO = {
     'us-east-1': {'name': 'US East (N. Virginia)',
